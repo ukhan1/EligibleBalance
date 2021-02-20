@@ -106,6 +106,8 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
     j = i + 1
     while(current_date <= end_of_m):
         try:
+            if(in_range == 0):
+                minimum = ws.cell(row = i, column = 7).value
             cell = ws.cell(row = i, column = 1).value
             nextcell = ws.cell(row = j, column = 1).value
             current_date = date(year = cell.year, month = cell.month, day = cell.day)
@@ -123,12 +125,11 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
                 # return {'partial_roi' : 0, 'error' : 1, 'r' : i, 'EoF': 0}
                 # return 0, 1, i, 0
             ### must continue until we reach m
-            if(next_date < start_of_m):
-                minimum = ws.cell(row = i, column = 7).value
+            if(next_date <= start_of_m):
                 i += 1
                 j += 1
                 continue
-            elif((next_date >= start_of_m) & (next_date <= end_of_m)):
+            elif((next_date > start_of_m) & (next_date <= end_of_m)):
                 ###continue calculation...
                 print("In range")
                 in_range = 1
@@ -136,6 +137,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
                     minimum = ws.cell(row = j, column = 7).value
                     i = j
                 j+=1
+                print(minimum)
                 continue
             ### outside of range, take last minimum
             elif(next_date > end_of_m):
