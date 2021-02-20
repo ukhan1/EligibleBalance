@@ -98,14 +98,20 @@ def p_increment():
     global p_COUNT
     p_COUNT = p_COUNT+1
     
-def partial_roi(ws, file, start_of_m, end_of_m, i):
+def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
+    ap_issued = ap
     in_range = 0
     cell = ws.cell(row = i, column = 1).value
     minimum = ws.cell(row = i, column = 7).value
+    
     current_date = date(year = cell.year, month = cell.month, day = cell.day)
     j = i + 1
     while(current_date <= end_of_m):
         try:
+            if(ws.cell(row = i, column = 2).value == issued):
+                ap_issued = 1
+            elif((ws.cell(row = i, column = 2).value == cancelled) | (ws.cell(row = j, column = 2).value == purchased)):
+                ap_issued = 0
             if(in_range == 0):
                 minimum = ws.cell(row = i, column = 7).value
             cell = ws.cell(row = i, column = 1).value
@@ -126,6 +132,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
                 # return 0, 1, i, 0
             ### must continue until we reach m
             if(next_date <= start_of_m):
+                minimum = ws.cell(row = j, column = 7).value
                 i += 1
                 j += 1
                 continue
@@ -133,16 +140,19 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
                 ###continue calculation...
                 print("In range")
                 in_range = 1
+                if((ws.cell(row = i, column = 2).value == issued) | (ap_issued == 1)):
+                    print("AP letter issued")
+                    ap_issued = 1
+                    return 0,0,i,0,1
                 if(minimum >= ws.cell(row = j, column = 7).value):
                     minimum = ws.cell(row = j, column = 7).value
-                    i = j
                 j+=1
                 print(minimum)
                 continue
             ### outside of range, take last minimum
             elif(next_date > end_of_m):
                 # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 0}
-                return minimum, 0, i, 0
+                return minimum, 0, i, 0, ap_issued
         except AttributeError:
             if((ws.cell(row = i, column = 7).value != None) & (ws.cell(row = j, column = 7).value != None)):
             ### missing dates should be somewhat frequent in the beginning
@@ -153,7 +163,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
                     increment()
                     error_wb.save(dir_error)
                     # return{'partial_roi' : minimum, 'error' : 1, 'r' : i, 'EoF' : 1}
-                    return minimum, 1, i, 1
+                    return minimum, 1, i, 1, ap_issued
                 else:
                     print("Missing date")
                     i += 1
@@ -162,8 +172,11 @@ def partial_roi(ws, file, start_of_m, end_of_m, i):
             else:
                 print("End of file, returning roi")
                 # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 1}
-                minimum = ws.cell(row = j-1, column = 7).value
-                return minimum, 0, i, 1
+                if(in_range == 0):
+                   #minimum = ws.cell(row = j-1, column = 7).value
+                    return minimum, 0, i, 1, ap_issued
+                else:
+                    return minimum, 0, i, 0, ap_issued
             
     
     print("Done partial roi")
@@ -183,8 +196,7 @@ def process_file(infile, outfile, file):
     p1 = 0
     p2 = 0
     p3 = 0
-    ap_issued = 0
-    ap_cancelled = 0
+    ap = 0
 
     os.chdir(dir_pre)
     book = load_workbook(infile, data_only = True)
@@ -210,7 +222,7 @@ def process_file(infile, outfile, file):
         return
     
     
-    p1, error, r, EoF = partial_roi(ws, file, start_of_m1, end_of_m1, r)
+    p1, error, r, EoF, ap = partial_roi(ws, file, start_of_m1, end_of_m1, r, 0)
     if(error):
         print("error: check log file")
         return
@@ -218,17 +230,19 @@ def process_file(infile, outfile, file):
         p2 = p1
         p3 = p1
     else:
-        p2, error, r, EoF = partial_roi(ws, file, start_of_m2, end_of_m2, r)
+        print("passing in row", r, " to p2")
+        p2, error, r, EoF, ap = partial_roi(ws, file, start_of_m2, end_of_m2, r, ap)
         if(error):
             print("error: check log file")
             return
-        if(EoF):
-            p3 = p2
-        else:
-            p3, error, r, EoF = partial_roi(ws, file, start_of_m3, end_of_m3, r)
-            if(error):
-                print("error: check log file")
-                return
+    if(EoF):
+        p3 = p2
+    else:
+        p3, error, r, EoF, ap = partial_roi(ws, file, start_of_m3, end_of_m3, r, ap)
+        if(error):
+            print("error: check log file")
+            return
+    
     print("P1:",p1)
     print("P2:",p2)
     print("P3:",p3)
