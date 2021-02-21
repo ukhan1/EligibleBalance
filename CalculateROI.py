@@ -103,11 +103,13 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
     in_range = 0
     cell = ws.cell(row = i, column = 1).value
     minimum = ws.cell(row = i, column = 7).value
-    
     current_date = date(year = cell.year, month = cell.month, day = cell.day)
+    if(current_date > start_of_m):
+        return 0, 0, i, 0, 0
     j = i + 1
     while(current_date <= end_of_m):
         try:
+        
             if(ws.cell(row = i, column = 2).value == issued):
                 ap_issued = 1
             elif((ws.cell(row = i, column = 2).value == cancelled) | (ws.cell(row = j, column = 2).value == purchased)):
@@ -140,10 +142,12 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 ###continue calculation...
                 print("In range")
                 in_range = 1
-                if((ws.cell(row = i, column = 2).value == issued) | (ap_issued == 1)):
+                if((ws.cell(row = j, column = 2).value == issued) | (ap_issued == 1)):
                     print("AP letter issued")
                     ap_issued = 1
                     return 0,0,i,0,1
+                if((ws.cell(row = j, column = 2).value == cancelled) | (ws.cell(row = j, column = 2).value == purchased)):
+                    ap_issued = 0
                 if(minimum >= ws.cell(row = j, column = 7).value):
                     minimum = ws.cell(row = j, column = 7).value
                 j+=1
@@ -154,7 +158,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 0}
                 return minimum, 0, i, 0, ap_issued
         except AttributeError:
-            if((ws.cell(row = i, column = 7).value != None) & (ws.cell(row = j, column = 7).value != None)):
+            if((ws.cell(row = i, column = 7).value != None) & (ws.cell(row = j, column = 7).value != None) & (ws.cell(row = j+1, column = 7).value != None)):
             ### missing dates should be somewhat frequent in the beginning
                 if(in_range == 1):
                     print("Critical error: Missing date in quarter")
