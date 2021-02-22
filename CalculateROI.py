@@ -101,86 +101,91 @@ def p_increment():
 def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
     ap_issued = ap
     in_range = 0
+    missing_date_error = 0
+    unordered_date_error = 0
     cell = ws.cell(row = i, column = 1).value
     minimum = ws.cell(row = i, column = 7).value
     current_date = date(year = cell.year, month = cell.month, day = cell.day)
     if(current_date > start_of_m):
-        return 0, 0, i, 0, 0
+        if(i == 9):
+            minimum = 0
+        return minimum, 0, i, 0, ap_issued
     j = i + 1
     while(current_date <= end_of_m):
         try:
-        
-            if(ws.cell(row = i, column = 2).value == issued):
-                ap_issued = 1
-            elif((ws.cell(row = i, column = 2).value == cancelled) | (ws.cell(row = j, column = 2).value == purchased)):
-                ap_issued = 0
-            if(in_range == 0):
-                minimum = ws.cell(row = i, column = 7).value
             cell = ws.cell(row = i, column = 1).value
-            nextcell = ws.cell(row = j, column = 1).value
+            next_cell = ws.cell(row = j, column = 1).value
             current_date = date(year = cell.year, month = cell.month, day = cell.day)
-            next_date = date(year = nextcell.year, month = nextcell.month, day = nextcell.day)
+            next_date = date(year = next_cell.year, month = next_cell.month, day = next_cell.day)
             ### comparison error case
             if(next_date < current_date):
-                print("Unordered dates:", current_date, "and", next_date)
-                error_ws.cell(row = COUNT, column = 1).value = file 
-                error_ws.cell(row = COUNT, column = 2).value = "Dates not in order"
-                increment()
-                error_wb.save(dir_error)
-                i += 1
-                j += 1
+                if(unordered_date_error == 0):
+                    unordered_date_error = 1
+                    print("Unordered dates:", current_date, "and", next_date)
+                    error_ws.cell(row = COUNT, column = 1).value = file 
+                    error_ws.cell(row = COUNT, column = 2).value = "Dates not in order"
+                    increment()
+                    error_wb.save(dir_error)
+                i=j
+                j+=1
                 continue
-                # return {'partial_roi' : 0, 'error' : 1, 'r' : i, 'EoF': 0}
-                # return 0, 1, i, 0
             ### must continue until we reach m
             if(next_date <= start_of_m):
+                if(issued in ws.cell(row = j, column = 2).value):
+                    print("issued")
+                    ap_issued = 1
+                elif((cancelled in ws.cell(row = j, column = 2).value) | (purchased in ws.cell(row = j, column = 2).value)):
+                    print("cancelled")
+                    ap_issued = 0
                 minimum = ws.cell(row = j, column = 7).value
-                i += 1
-                j += 1
+                i=j
+                j+=1
                 continue
             elif((next_date > start_of_m) & (next_date <= end_of_m)):
-                ###continue calculation...
-                print("In range")
                 in_range = 1
-                if((ws.cell(row = j, column = 2).value == issued) | (ap_issued == 1)):
-                    print("AP letter issued")
-                    ap_issued = 1
-                    return 0,0,i,0,1
-                if((ws.cell(row = j, column = 2).value == cancelled) | (ws.cell(row = j, column = 2).value == purchased)):
-                    ap_issued = 0
-                if(minimum >= ws.cell(row = j, column = 7).value):
+                if(minimum > ws.cell(row = j, column = 7).value):
                     minimum = ws.cell(row = j, column = 7).value
+                    i = j
+                if(issued in ws.cell(row = j, column = 2).value):
+                    print("ap issued")
+                    ap_issued = 1
+                    return minimum, 0, i, 0, ap_issued
+                elif((cancelled in ws.cell(row = j, column = 2).value) | (purchased in ws.cell(row = j, column = 2).value)):
+                    print("ap_cancelled")
+                    ap_issued = 0
+                    return 0, 0, i, 0, ap_issued
+                if(ws.cell(row = j+1, column = 7).value == None):
+                    return minimum, 0, i, 0, ap_issued
                 j+=1
-                print(minimum)
                 continue
             ### outside of range, take last minimum
             elif(next_date > end_of_m):
                 # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 0}
                 return minimum, 0, i, 0, ap_issued
         except AttributeError:
-            if((ws.cell(row = i, column = 7).value != None) & (ws.cell(row = j, column = 7).value != None) & (ws.cell(row = j+1, column = 7).value != None)):
-            ### missing dates should be somewhat frequent in the beginning
-                if(in_range == 1):
-                    print("Critical error: Missing date in quarter")
+            if(ws.cell(row = j+1, column = 7).value != None):
+                if(missing_date_error == 0):
+                    missing_date_error = 1
+                    print("Missing Date")
                     error_ws.cell(row = COUNT, column = 1).value = file 
-                    error_ws.cell(row = COUNT, column = 2).value = "Missing date in quarter"
+                    error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
                     increment()
                     error_wb.save(dir_error)
-                    # return{'partial_roi' : minimum, 'error' : 1, 'r' : i, 'EoF' : 1}
-                    return minimum, 1, i, 1, ap_issued
-                else:
-                    print("Missing date")
-                    i += 1
-                    j += 1
-                    continue
+                j+=1
+                continue
+            elif(ws.cell(row = j+2, column = 7).value != None):
+                if(missing_date_error == 0):
+                    missing_date_error = 1
+                    print("Missing Date")
+                    error_ws.cell(row = COUNT, column = 1).value = file 
+                    error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
+                    increment()
+                    error_wb.save(dir_error)
+                j+=2
+                continue
+            ### missing dates should be somewhat frequent in the beginning
             else:
-                print("End of file, returning roi")
-                # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 1}
-                if(in_range == 0):
-                   #minimum = ws.cell(row = j-1, column = 7).value
-                    return minimum, 0, i, 1, ap_issued
-                else:
-                    return minimum, 0, i, 0, ap_issued
+                return minimum, 0, i, 1, ap_issued
             
     
     print("Done partial roi")
@@ -220,7 +225,7 @@ def process_file(infile, outfile, file):
     except :
         print("Missing date in first row")
         error_ws.cell(row = COUNT, column = 1).value = file 
-        error_ws.cell(row = COUNT, column = 3).value = "Missing first row"
+        error_ws.cell(row = COUNT, column = 2).value = "Missing first row"
         increment()
         error_wb.save(dir_error)
         return
@@ -230,6 +235,8 @@ def process_file(infile, outfile, file):
     if(error):
         print("error: check log file")
         return
+    if(ap):
+        p1 = 0
     if(EoF):
         p2 = p1
         p3 = p1
@@ -239,6 +246,8 @@ def process_file(infile, outfile, file):
         if(error):
             print("error: check log file")
             return
+    if(ap):
+        p2 = 0
     if(EoF):
         p3 = p2
     else:
@@ -246,7 +255,8 @@ def process_file(infile, outfile, file):
         if(error):
             print("error: check log file")
             return
-    
+    if(ap):
+        p3 = 0
     print("P1:",p1)
     print("P2:",p2)
     print("P3:",p3)
