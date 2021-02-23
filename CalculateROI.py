@@ -132,8 +132,9 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
             ### must continue until we reach m
             if(next_date <= start_of_m):
                 if(issued in ws.cell(row = j, column = 2).value):
-                    print("issued")
-                    ap_issued = 1
+                    if((ws.cell(row = j, column = 1).value) < (start_of_m - timedelta(days = 90)).date()):
+                        print("issued")
+                        ap_issued = 1
                 elif((cancelled in ws.cell(row = j, column = 2).value) | (purchased in ws.cell(row = j, column = 2).value)):
                     print("cancelled")
                     ap_issued = 0
@@ -167,20 +168,22 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 if(missing_date_error == 0):
                     missing_date_error = 1
                     print("Missing Date")
-                    error_ws.cell(row = COUNT, column = 1).value = file 
-                    error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
-                    increment()
-                    error_wb.save(dir_error)
+                    if(in_range):
+                        error_ws.cell(row = COUNT, column = 1).value = file 
+                        error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
+                        increment()
+                        error_wb.save(dir_error)
                 j+=1
                 continue
             elif(ws.cell(row = j+2, column = 7).value != None):
                 if(missing_date_error == 0):
                     missing_date_error = 1
                     print("Missing Date")
-                    error_ws.cell(row = COUNT, column = 1).value = file 
-                    error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
-                    increment()
-                    error_wb.save(dir_error)
+                    if(in_range):
+                        error_ws.cell(row = COUNT, column = 1).value = file 
+                        error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
+                        increment()
+                        error_wb.save(dir_error)
                 j+=2
                 continue
             ### missing dates should be somewhat frequent in the beginning
@@ -206,7 +209,6 @@ def process_file(infile, outfile, file):
     p2 = 0
     p3 = 0
     ap = 0
-
     os.chdir(dir_pre)
     book = load_workbook(infile, data_only = True)
     ws = book.active
@@ -268,7 +270,7 @@ def process_file(infile, outfile, file):
     
 for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
 #file = "0733C2.xlsx"
-    file_in = os.path.join(dir_pre, file)
+    file_in = os.path.join(dir_pre, "0944-HO-Error.xlsx")
     file_out = os.path.join(dir_post, file)
     #file_in = file_in.replace(os.sep, '/')
     print(file_in)
