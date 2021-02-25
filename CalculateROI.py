@@ -124,10 +124,11 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 if(unordered_date_error == 0):
                     unordered_date_error = 1
                     print("Unordered dates:", current_date, "and", next_date)
-                    error_ws.cell(row = COUNT, column = 1).value = file 
-                    error_ws.cell(row = COUNT, column = 2).value = "Dates not in order"
-                    increment()
-                    error_wb.save(dir_error)
+                    if (in_range == 1):
+                        error_ws.cell(row = COUNT, column = 1).value = file 
+                        error_ws.cell(row = COUNT, column = 2).value = "Dates not in order"
+                        increment()
+                        error_wb.save(dir_error)
                 i=j
                 j+=1
                 continue
@@ -170,7 +171,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 if(missing_date_error == 0):
                     missing_date_error = 1
                     print("Missing Date")
-                    if(in_range):
+                    if(in_range == 1):
                         error_ws.cell(row = COUNT, column = 1).value = file 
                         error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
                         increment()
@@ -182,7 +183,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 if(missing_date_error == 0):
                     missing_date_error = 1
                     print("Missing Date")
-                    if(in_range):
+                    if(in_range == 1):
                         error_ws.cell(row = COUNT, column = 1).value = file 
                         error_ws.cell(row = COUNT, column = 2).value = "Missing Dates"
                         increment()
@@ -196,6 +197,13 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
         except TypeError:
             error_ws.cell(row = COUNT, column = 1).value = file 
             error_ws.cell(row = COUNT, column = 2).value = "Other Error"
+            increment()
+            error_wb.save(dir_error)
+            return 0,1,i,0,ap_issued
+        except:
+            print("Unexpected error")
+            error_ws.cell(row = COUNT, column = 1).value = file 
+            error_ws.cell(row = COUNT, column = 2).value = "Unexpected error"
             increment()
             error_wb.save(dir_error)
             return 0,1,i,0,ap_issued
