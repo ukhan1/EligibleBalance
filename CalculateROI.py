@@ -76,22 +76,19 @@ def startButton():
             print("Invalid quarter, please try again")
         else:
             print("Continuing...")    
+            if(os.path.exists(dir_pre)):
+                print("continuing...")
+                if not os.listdir(dir_pre):
+                    print("directory is empty")
+                else:
+                    print("continuing...")
+                    dir_list = sorted(os.listdir(dir_pre))
+                    master.destroy()     
+            else:
+                print("no such path")
     except ValueError:
         print("Invalid quarter or year, please try again")
-    
-    try:
-        if(os.path.exists(dir_pre)):
-            print("continuing...")
-            if not os.listdir(dir_pre):
-                print("directory is empty")
-            else:
-                print("continuing...")
-                dir_list = sorted(os.listdir(dir_pre))
-                master.destroy()     
-        else:
-            print("no such path")
-    except:
-        print(Exception)
+
 def getBool():
     return var1.get(), var2.get()
 def getText():
@@ -146,11 +143,11 @@ e2.pack(side = "left")
 
 #Creating and setting Input and Output paths
 tk.Label(bottomFrame1, text = "Input Path").pack(side = "left")
-e3 = tk.Entry(bottomFrame1, width = 20)
+e3 = tk.Entry(bottomFrame1, width = 50)
 e3.insert(0, dir_pre)
 e3.pack(side = "right")
 tk.Label(bottomFrame2, text = "Output Path").pack(side = "left")
-e4 = tk.Entry(bottomFrame2, width = 20)
+e4 = tk.Entry(bottomFrame2, width = 50)
 e4.insert(0, dir_post)
 e4.pack(side = "right")
 
@@ -163,6 +160,7 @@ tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(s
 #Quitting after mainloop
 tk.mainloop()
 master.quit()
+
 if(button_exit == 1):
     print("Exiting")
     sys.exit()
