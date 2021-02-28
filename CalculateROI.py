@@ -8,6 +8,8 @@ Created on Fri Feb 19 15:54:45 2021
 import os
 import calendar
 import datetime
+import sys
+import tkinter as tk
 from copy import copy
 from datetime import date, timedelta
 from openpyxl.formula.translate import Translator
@@ -42,16 +44,131 @@ print(dir)
 ##################################
 ### Get current quarter months ###
 ##################################
+today = date.today()
+tempqtr = ((today.month-1)//3 + 1)
+button_exit = 0
+def quitButton():
+    global button_exit
+    button_exit = 1
+    master.destroy()
+    
+def startButton():
+    # today = datetime.date(datetime.now())
+    global quarter
+    global year
+    global dir_pre
+    global dir_post
+    global dir_list
+    global write_principal
+    global write_statements
+    write_principal, write_statements = getBool()
+    q,y,inp,outp = getText()
+    try:
+        quarter = int(q)
+        year = int(y)
+        if((quarter <= 0)|(quarter > 4)):
+            raise ValueError
+        dir_pre = inp
+        dir_post = outp
+        if(year > today.year):
+            print("Invalid year, please try again")
+        elif((year == today.year) & (tempqtr <= quarter)):
+            print("Invalid quarter, please try again")
+        else:
+            print("Continuing...")    
+    except ValueError:
+        print("Invalid quarter or year, please try again")
+    
+    try:
+        if(os.path.exists(dir_pre)):
+            print("continuing...")
+            if not os.listdir(dir_pre):
+                print("directory is empty")
+            else:
+                print("continuing...")
+                dir_list = sorted(os.listdir(dir_pre))
+                master.destroy()     
+        else:
+            print("no such path")
+    except:
+        print(Exception)
+def getBool():
+    return var1.get(), var2.get()
+def getText():
+    global e1
+    global e2
+    global e3
+    global e4
+    print(var1.get())
+    q = e1.get()
+    y = e2.get()
+    inp= e3.get()
+    outp= e4.get()
+    return q,y,inp,outp
 
-input_day = date(year = 2020, month = 10, day = 5)
-today = input_day.day
-month = input_day.month
-year = input_day.year
-m = 10
-quarter = ((m-1)//3 + 1)
+#Setting root
+
+master = tk.Tk()
+frame = tk.Frame(master)
+frame.pack()
+
+#Creating checkbox variables
+var1 = tk.BooleanVar(value=True)
+var2 = tk.BooleanVar(value=False)
+if (tempqtr == 1):
+    entryq = 4
+    entryy = today.year-1
+else:
+    entryq = tempqtr
+    entryy = today.year
+#Creating and setting frames
+middleFrame = tk.Frame(master)
+middleFrame.pack(side = "bottom")
+bottomFrame1 = tk.Frame(middleFrame)
+bottomFrame1.pack(side = "bottom")
+bottomFrame2 = tk.Frame(bottomFrame1)
+bottomFrame2.pack(side = "bottom")
+bottomFrame3 = tk.Frame(bottomFrame2)
+bottomFrame3.pack(side = "bottom") 
+bottomFrame4 = tk.Frame(bottomFrame3)
+bottomFrame4.pack(side = "bottom") 
+
+#Creating and setting top and middle Labels and Entries
+tk.Label(frame, text = "ROI calculator").pack(side = "top")
+tk.Label(middleFrame, text="Quarter").pack(side = "left")
+e1 = tk.Entry(middleFrame, width = 1)
+e1.insert(0, entryq)
+e1.pack(side = "left")
+tk.Label(middleFrame, text="Year").pack(side = "left")
+e2 = tk.Entry(middleFrame, width = 4)
+e2.insert(0, entryy)
+e2.pack(side = "left")
+
+#Creating and setting Input and Output paths
+tk.Label(bottomFrame1, text = "Input Path").pack(side = "left")
+e3 = tk.Entry(bottomFrame1, width = 20)
+e3.insert(0, dir_pre)
+e3.pack(side = "right")
+tk.Label(bottomFrame2, text = "Output Path").pack(side = "left")
+e4 = tk.Entry(bottomFrame2, width = 20)
+e4.insert(0, dir_post)
+e4.pack(side = "right")
+
+#Creating and setting Checkboxes and Start/Exit buttons
+c1 = tk.Checkbutton(bottomFrame3, text = "Write Principal Column", variable = var1).pack(side = "top")
+c2 = tk.Checkbutton(bottomFrame3, text = "Write Statements", variable = var2).pack(side = "left")
+tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
+tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "right")
+
+#Quitting after mainloop
+tk.mainloop()
+master.quit()
+if(button_exit == 1):
+    print("Exiting")
+    sys.exit()
 pstr = str(year) + "Q" + str(quarter) + "principal_column.xlsx"
 dir_principal = os.path.join(dir, pstr)
-roi_string = "ROI " + str(input_day.year) + "Q" + str(quarter) + ": " + "{:.2f}%".format(declared_roi)
+roi_string = "ROI " + str(year) + "Q" + str(quarter) + ": " + "{:.2f}%".format(declared_roi)
 print(roi_string)
 if (quarter == 1):
     month1 = 1
@@ -71,19 +188,20 @@ elif (quarter == 4):
     month3 = 12
 else :
     print("Invalid Quarter")
+    sys.exit()
     
-start_of_m1 = date(year = input_day.year, month = month1, day = 1)
-start_of_m2 = date(year = input_day.year, month = month2, day = 1)
-start_of_m3 = date(year = input_day.year, month = month3, day = 1)
-end_of_m1 =  date(year = input_day.year, month = month1, day = calendar.monthrange(input_day.year, month1)[1])
-end_of_m2 = date(year = input_day.year, month = month2, day = calendar.monthrange(input_day.year, month2)[1])
-end_of_m3 = date(year = input_day.year, month = month3, day = calendar.monthrange(input_day.year, month3)[1])
+start_of_m1 = date(year = year, month = month1, day = 1)
+start_of_m2 = date(year = year, month = month2, day = 1)
+start_of_m3 = date(year = year, month = month3, day = 1)
+end_of_m1 =  date(year = year, month = month1, day = calendar.monthrange(year, month1)[1])
+end_of_m2 = date(year = year, month = month2, day = calendar.monthrange(year, month2)[1])
+end_of_m3 = date(year = year, month = month3, day = calendar.monthrange(year, month3)[1])
 end_of_quarter = end_of_m3
 
 
-print("Month 1:", calendar.month_name[month1], "Last day:", calendar.monthrange(input_day.year, month1)[1])
-print("Month 2:", calendar.month_name[month2], "Last day:", calendar.monthrange(input_day.year, month2)[1])
-print("Month 3:", calendar.month_name[month3], "Last day:", calendar.monthrange(input_day.year, month3)[1])    
+print("Month 1:", calendar.month_name[month1], "Last day:", calendar.monthrange(year, month1)[1])
+print("Month 2:", calendar.month_name[month2], "Last day:", calendar.monthrange(year, month2)[1])
+print("Month 3:", calendar.month_name[month3], "Last day:", calendar.monthrange(year, month3)[1])    
 print("End of Quarter:", end_of_quarter)
 print(end_of_quarter)
 
@@ -220,6 +338,7 @@ def write_principal_column(file, p1, p2, p3, avg, roi):
     principal_ws.cell(row = p_COUNT, column = 5).value = avg
     principal_ws.cell(row = p_COUNT, column = 6).value = roi
     principal_wb.save(dir_principal)
+    
 def process_file(infile, outfile, file):
     out_of_range = 0
     r = 9
@@ -273,8 +392,10 @@ def process_file(infile, outfile, file):
         print("P3:",p3)
         avg = (p1 + p2 + p3)/3
         roi = (p1 + p2 + p3) * declared_roi/(3*100)
-        write_principal_column(file, p1, p2, p3, avg, roi)
-        p_increment()
+        if(write_principal == True):
+            write_principal_column(file, p1, p2, p3, avg, roi)
+            p_increment()
+            
     except AttributeError:
        print("Missing date in first row")
        error_ws.cell(row = COUNT, column = 1).value = file 
@@ -300,14 +421,14 @@ def process_file(infile, outfile, file):
        book.close() 
        return
     book.close()
-    
-principal_ws.cell(row =  1, column = 1).value = "File No"
-principal_ws.cell(row =  1, column = 2).value = "P1"
-principal_ws.cell(row =  1, column = 3).value = "P2"
-principal_ws.cell(row =  1, column = 4).value = "P3"
-principal_ws.cell(row =  1, column = 5).value = "Avg"
-principal_ws.cell(row =  1, column = 6).value = "ROI"
-p_increment()
+if(write_principal == True):
+    principal_ws.cell(row =  1, column = 1).value = "File No"
+    principal_ws.cell(row =  1, column = 2).value = "P1"
+    principal_ws.cell(row =  1, column = 3).value = "P2"
+    principal_ws.cell(row =  1, column = 4).value = "P3"
+    principal_ws.cell(row =  1, column = 5).value = "Avg"
+    principal_ws.cell(row =  1, column = 6).value = "ROI"
+    p_increment()
 for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
 #file = "0733C2.xlsx"
     file_in = os.path.join(dir_pre, file)
