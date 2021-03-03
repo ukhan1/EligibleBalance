@@ -336,8 +336,44 @@ def write_principal_column(file, p1, p2, p3, avg, roi):
     principal_ws.cell(row = p_COUNT, column = 5).value = avg
     principal_ws.cell(row = p_COUNT, column = 6).value = roi
     principal_wb.save(dir_principal)
+def write_output_file(file, file_out, roi, r):
+    book = load_workbook(file)
+    ws = book.active
+    cell = ws.cell(row=r,column=1).value
+    current_date = date(year = cell.year, month = cell.month, day = cell.day)
+    origin = 'G' + str(10)
+    formula = "=G9-C10+D10+E10+F10"
+    thin = Side(border_style="thin", color="000000")
+    if(current_date >= end_of_quarter):
+        ws.insert_rows(r)
+    else:
+        r+=1
+        ws.insert_rows(r)
+    j = 1
+    while(j < 8):
+        cell = ws.cell(row = 9, column = j)
+        new_cell = ws.cell(row=r, column = j)
+        if cell.has_style:
+            new_cell._style = copy(cell._style)
+        else:
+            print("No style detected")
+            ws.cell(row = r-1, column = j).border = Border(top = thin, right = thin, left = thin, bottom = thin)        
+        new_cell.font = Font(bold = None)
+        j +=1
+    ws.cell(row = r, column = 1).value = end_of_quarter
+    ws.cell(row = r, column = 2).value = roi_string
+    ws.cell(row = r, column = 5).value = roi
+    ws.cell(row = r, column = 5).alignment = Alignment(horizontal = 'right')
+    fcell = 'G' + str(r)
+    gcell = 'G' + str(r+1)
+    ws[fcell].value = Translator(formula, origin).translate_formula(fcell)
+    if(ws[gcell].value != None):
+        ws[gcell].value = Translator(formula, origin).translate_formula(gcell)
+    print("End of file")
+    book.save(file_out)
+    book.close()
     
-def process_file(infile, outfile, file):
+def process_file(file_in, file_out, file):
     out_of_range = 0
     r = 9
     p1 = 0
@@ -345,7 +381,7 @@ def process_file(infile, outfile, file):
     p3 = 0
     ap = 0
     os.chdir(dir_pre)
-    book = load_workbook(infile, data_only = True)
+    book = load_workbook(file_in, data_only = True)
     ws = book.active
     
     cell = ws.cell(row = r, column = 1).value
@@ -393,7 +429,9 @@ def process_file(infile, outfile, file):
         if(write_principal == True):
             write_principal_column(file, p1, p2, p3, avg, roi)
             p_increment()
-            
+        if(write_statements == True):
+            write_output_file(file, file_out, roi, r)
+       
     except AttributeError:
        print("Missing date in first row")
        error_ws.cell(row = COUNT, column = 1).value = file 
