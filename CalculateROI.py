@@ -252,7 +252,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
             if(next_date <= start_of_m):
                 minimum = ws.cell(row = j, column = 7).value
                 if(issued in ws.cell(row = j, column = 2).value.lower()):
-                    if((ws.cell(row = j, column = 1).value) >= (start_of_m - timedelta(days = 90)).date()):
+                    if(next_date >= (start_of_m - timedelta(days = 90))):
                         print("issued")
                         ap_issued = 1
                 elif((cancelled in ws.cell(row = j, column = 2).value.lower()) | (purchased in ws.cell(row = j, column = 2).value.lower())):
@@ -396,6 +396,7 @@ def process_file(file_in, file_out, file):
             error_wb.save(dir_error)
             return
         p1, error, r, EoF, ap = partial_roi(ws, file, start_of_m1, end_of_m1, r, 0)
+        p1 = round(p1, 2)
         if(error):
             print("error: check log file")
             return
@@ -407,6 +408,7 @@ def process_file(file_in, file_out, file):
         else:
             print("passing in row", r, " to p2")
             p2, error, r, EoF, ap = partial_roi(ws, file, start_of_m2, end_of_m2, r, ap)
+            p2 = round(p2, 2)
             if(error):
                 print("error: check log file")
                 return
@@ -416,6 +418,7 @@ def process_file(file_in, file_out, file):
             p3 = p2
         else:
             p3, error, r, EoF, ap = partial_roi(ws, file, start_of_m3, end_of_m3, r, ap)
+            p3 = round(p3, 2)
             if(error):
                 print("error: check log file")
                 return
@@ -426,6 +429,7 @@ def process_file(file_in, file_out, file):
         print("P3:",p3)
         avg = (p1 + p2 + p3)/3
         roi = (p1 + p2 + p3) * declared_roi/(3*100)
+        roi = round(roi, 2)
         if(write_principal == True):
             write_principal_column(file, p1, p2, p3, avg, roi)
             p_increment()
@@ -466,7 +470,6 @@ if(write_principal == True):
     principal_ws.cell(row =  1, column = 6).value = "ROI"
     p_increment()
 for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
-#file = "0733C2.xlsx"
     file_in = os.path.join(dir_pre, file)
     file_out = os.path.join(dir_post, file)
     #file_in = file_in.replace(os.sep, '/')
