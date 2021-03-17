@@ -61,11 +61,14 @@ def startButton():
     global dir_list
     global write_principal
     global write_statements
-    write_principal, write_statements = getBool()
-    q,y,inp,outp = getText()
+    global compare_statements
+    global declared_roi
+    write_principal, write_statements, compare_statements = getBool()
+    q,y,r,inp,outp = getText()
     try:
         quarter = int(q)
         year = int(y)
+        declared_roi = float(r)
         if((quarter <= 0)|(quarter > 4)):
             raise ValueError
         dir_pre = inp
@@ -89,22 +92,31 @@ def startButton():
     except ValueError:
         print("Invalid quarter or year, please try again")
 
+#Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get()
+    return var1.get(), var2.get(), var3.get()
 def getText():
     global e1
     global e2
     global e3
     global e4
+    global e5
     print(var1.get())
     q = e1.get()
     y = e2.get()
-    inp= e3.get()
-    outp= e4.get()
-    return q,y,inp,outp
-
+    r = e3.get()
+    inp= e4.get()
+    outp= e5.get()
+    return q,y,r,inp,outp
+def click():
+    if(var3.get() == False):
+        c1.config(state = "normal")
+        c2.config(state = "normal")
+    else:
+        c1.config(state = "disabled")
+        c2.config(state = "disabled")
+        
 #Setting root
-
 master = tk.Tk()
 frame = tk.Frame(master)
 frame.pack()
@@ -112,6 +124,8 @@ frame.pack()
 #Creating checkbox variables
 var1 = tk.BooleanVar(value=True)
 var2 = tk.BooleanVar(value=False)
+var3 = tk.BooleanVar(value=False)
+entryr = declared_roi
 if (tempqtr == 1):
     entryq = 4
     entryy = today.year-1
@@ -119,8 +133,12 @@ else:
     entryq = tempqtr
     entryy = today.year
 #Creating and setting frames
-middleFrame = tk.Frame(master)
+middleFrame = tk.Frame(frame)
 middleFrame.pack(side = "bottom")
+rightFrame1 = tk.Frame(middleFrame)
+rightFrame1.pack(side = "right")
+rightFrame2 = tk.Frame(rightFrame1)
+rightFrame2.pack(side = "bottom")
 bottomFrame1 = tk.Frame(middleFrame)
 bottomFrame1.pack(side = "bottom")
 bottomFrame2 = tk.Frame(bottomFrame1)
@@ -131,7 +149,7 @@ bottomFrame4 = tk.Frame(bottomFrame3)
 bottomFrame4.pack(side = "bottom") 
 
 #Creating and setting top and middle Labels and Entries
-tk.Label(frame, text = "ROI calculator").pack(side = "top")
+tk.Label(frame, text = "ROI calculator").pack()
 tk.Label(middleFrame, text="Quarter").pack(side = "left")
 e1 = tk.Entry(middleFrame, width = 1)
 e1.insert(0, entryq)
@@ -140,22 +158,42 @@ tk.Label(middleFrame, text="Year").pack(side = "left")
 e2 = tk.Entry(middleFrame, width = 4)
 e2.insert(0, entryy)
 e2.pack(side = "left")
+tk.Label(middleFrame, text="Roi").pack(side = "left")
+e3 = tk.Entry(middleFrame, width = 4)
+e3.insert(0, entryr)
+e3.pack(side = "left")
+tk.Label(middleFrame, text = "%").pack(side = "left")
+
+#Setting 2nd Menu Frames
+tk.Label(rightFrame1,text = "rightFrame1, 1").pack()
+tk.Label(rightFrame1,text = "rightFrame1, 2").pack()
+tk.Label(rightFrame1,text = "rightFrame1, 3").pack()
+tk.Label(rightFrame1,text = "rightFrame1, 4").pack()
+tk.Label(rightFrame2,text = "rightFrame2, 1").pack()
+tk.Label(rightFrame2,text = "rightFrame2, 2").pack()
+tk.Label(rightFrame2,text = "rightFrame2, 3").pack()
 
 #Creating and setting Input and Output paths
 tk.Label(bottomFrame1, text = "Input Path").pack(side = "left")
-e3 = tk.Entry(bottomFrame1, width = 50)
-e3.insert(0, dir_pre)
-e3.pack(side = "right")
-tk.Label(bottomFrame2, text = "Output Path").pack(side = "left")
-e4 = tk.Entry(bottomFrame2, width = 50)
-e4.insert(0, dir_post)
+e4 = tk.Entry(bottomFrame1, width = 50)
+e4.insert(0, dir_pre)
 e4.pack(side = "right")
+tk.Label(bottomFrame2, text = "Output Path").pack(side = "left")
+e5 = tk.Entry(bottomFrame2, width = 50)
+e5.insert(0, dir_post)
+e5.pack(side = "right")
+
 
 #Creating and setting Checkboxes and Start/Exit buttons
-c1 = tk.Checkbutton(bottomFrame3, text = "Write Principal Column", variable = var1).pack(side = "top")
-c2 = tk.Checkbutton(bottomFrame3, text = "Write Statements", variable = var2).pack(side = "left")
+c1 = tk.Checkbutton(bottomFrame3, text = "Write Principal Column", variable = var1)
+c1.pack()
+c2 = tk.Checkbutton(bottomFrame3, text = "Write Statements", variable = var2)
+c2.pack()
+c3 = tk.Checkbutton(bottomFrame3, text = "Compare Statements", command = click, variable = var3)
+c3.pack()
+
 tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
-tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "right")
+tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "left")
 
 #Quitting after mainloop
 tk.mainloop()
@@ -164,9 +202,10 @@ master.quit()
 if(button_exit == 1):
     print("Exiting")
     sys.exit()
-pstr = str(year) + "Q" + str(quarter) + "principal_column.xlsx"
+target = str(year) + "Q" + str(quarter)
+pstr = target + "principal_column.xlsx"
 dir_principal = os.path.join(dir, pstr)
-roi_string = "ROI " + str(year) + "Q" + str(quarter) + ": " + "{:.2f}%".format(declared_roi)
+roi_string = "ROI " + target + ": " + "{:.2f}%".format(declared_roi)
 print(roi_string)
 if (quarter == 1):
     month1 = 1
@@ -215,6 +254,36 @@ p_COUNT = 1
 def p_increment():
     global p_COUNT
     p_COUNT = p_COUNT+1
+
+def compareStatements(file, calculated):
+    validation = False;
+    matched = False;
+    book = load_workbook(os.path.join(dir_post, file))
+    ws = book.active
+    i = 1
+    while(i <= ws.max_row):
+        if(ws.cell(row = i, column = 2).value == None):
+           i+=1
+           continue
+        else:
+            if(target in ws.cell(row = i, column = 2).value):
+                print("Filename:", file, "Roi:", calculated)
+                observed = round(ws.cell(row = i, column = 5).value,2)
+                print("Checked Value:", observed)
+                validation = True
+                break
+            else:
+                i+=1
+    if(validation == False):
+        print("Values not found. Continuing...")
+        return
+    if(observed == calculated):
+        matched = True;
+        print("Values match")
+    else:
+        print("Values do not match")
+    
+        
     
 def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
     ap_issued = ap
@@ -469,12 +538,25 @@ if(write_principal == True):
     principal_ws.cell(row =  1, column = 5).value = "Avg"
     principal_ws.cell(row =  1, column = 6).value = "ROI"
     p_increment()
-for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
-    file_in = os.path.join(dir_pre, file)
-    file_out = os.path.join(dir_post, file)
-    #file_in = file_in.replace(os.sep, '/')
-    print(file_in)
-    process_file(file_in, file_out, file)   
+
+if(compare_statements == True):
+    principal_wb = load_workbook(dir_principal)
+    principal_ws = principal_wb.active
+    row_count = principal_ws.max_row
+    column_count = principal_ws.max_column
+    i = 2
+    while(i <= row_count):
+        fileno = principal_ws.cell(row = i, column = 1).value
+        calculated_roi = principal_ws.cell(row = i, column = 6).value
+        i+=1
+        compareStatements(fileno, calculated_roi)
+else:
+    for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
+        file_in = os.path.join(dir_pre, file)
+        file_out = os.path.join(dir_post, file)
+        #file_in = file_in.replace(os.sep, '/')
+        print(file_in)
+        process_file(file_in, file_out, file)   
             
     
         
