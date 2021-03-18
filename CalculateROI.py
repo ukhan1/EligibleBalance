@@ -255,7 +255,7 @@ def p_increment():
     global p_COUNT
     p_COUNT = p_COUNT+1
 
-def compareStatements(file, calculated):
+def compareStatements(file, calculated, r):
     validation = False;
     matched = False;
     book = load_workbook(os.path.join(dir_post, file))
@@ -269,6 +269,7 @@ def compareStatements(file, calculated):
             if(target in ws.cell(row = i, column = 2).value):
                 print("Filename:", file, "Roi:", calculated)
                 observed = round(ws.cell(row = i, column = 5).value,2)
+                principal_ws.cell(row = r, column = 7).value = observed
                 print("Checked Value:", observed)
                 validation = True
                 break
@@ -279,9 +280,13 @@ def compareStatements(file, calculated):
         return
     if(observed == calculated):
         matched = True;
+        principal_ws.cell(row = r, column = 8).value = matched
         print("Values match")
     else:
+        matched = False
+        principal_ws.cell(row = r, column = 8).value = matched
         print("Values do not match")
+    principal_wb.save(dir_principal)
     
         
     
@@ -349,8 +354,9 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 continue
             ### outside of range, take last minimum
             elif(next_date > end_of_m):
+                print("outside range")
                 # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 0}
-                return minimum, 0, i, 0, ap_issued
+                return minimum, 0, j-1, 0, ap_issued
         except AttributeError:
             if(ws.cell(row = j+1, column = 7).value != None):
                 if(missing_date_error == 0):
@@ -413,11 +419,11 @@ def write_output_file(file, file_out, roi, r):
     origin = 'G' + str(10)
     formula = "=G9-C10+D10+E10+F10"
     thin = Side(border_style="thin", color="000000")
-    if(current_date >= end_of_quarter):
+    if(current_date > end_of_quarter):
         ws.insert_rows(r)
     else:
+        ws.insert_rows(r+1)
         r+=1
-        ws.insert_rows(r)
     j = 1
     while(j < 8):
         cell = ws.cell(row = 9, column = j)
@@ -475,7 +481,6 @@ def process_file(file_in, file_out, file):
             p2 = p1
             p3 = p1
         else:
-            print("passing in row", r, " to p2")
             p2, error, r, EoF, ap = partial_roi(ws, file, start_of_m2, end_of_m2, r, ap)
             p2 = round(p2, 2)
             if(error):
@@ -521,6 +526,10 @@ def process_file(file_in, file_out, file):
        error_wb.save(dir_error)
        book.close()
        return
+    except KeyboardInterrupt:
+        print("Exiting...")
+        book.close()
+        sys.exit()
     except:
        print("Unexpected error")
        error_ws.cell(row = COUNT, column = 1).value = file 
@@ -536,7 +545,10 @@ if(write_principal == True):
     principal_ws.cell(row =  1, column = 3).value = "P2"
     principal_ws.cell(row =  1, column = 4).value = "P3"
     principal_ws.cell(row =  1, column = 5).value = "Avg"
-    principal_ws.cell(row =  1, column = 6).value = "ROI"
+    principal_ws.cell(row =  1, column = 6).value = "Calculated ROI"
+    principal_ws.cell(row =  1, column = 7).value = "Observed ROI"
+    principal_ws.cell(row =  1, column = 8).value = "Values Match?"
+    
     p_increment()
 
 if(compare_statements == True):
@@ -548,8 +560,8 @@ if(compare_statements == True):
     while(i <= row_count):
         fileno = principal_ws.cell(row = i, column = 1).value
         calculated_roi = principal_ws.cell(row = i, column = 6).value
+        compareStatements(fileno, calculated_roi, i)
         i+=1
-        compareStatements(fileno, calculated_roi)
 else:
     for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
         file_in = os.path.join(dir_pre, file)
