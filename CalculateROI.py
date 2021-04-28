@@ -130,7 +130,7 @@ if (tempqtr == 1):
     entryq = 4
     entryy = today.year-1
 else:
-    entryq = tempqtr
+    entryq = tempqtr - 1
     entryy = today.year
 #Creating and setting frames
 middleFrame = tk.Frame(frame)
@@ -291,6 +291,7 @@ def compareStatements(file, calculated, r):
         
     
 def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
+    # print("start:", start_of_m, "end:", end_of_m)
     ap_issued = ap
     in_range = 0
     missing_date_error = 0
@@ -349,15 +350,16 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                     ap_issued = 0
                     return 0, 0, i, 0, ap_issued
                 if(ws.cell(row = j+1, column = 7).value == None):
-                    return minimum, 0, i, 0, ap_issued
+                    print("Empty Value")
+                    return minimum, 0, j, 0, ap_issued
                 j+=1
                 continue
             ### outside of range, take last minimum
             elif(next_date > end_of_m):
-                print("outside range")
-                # return{'partial_roi' : minimum, 'error' : 0, 'r' : i, 'EoF' : 0}
+                # print("end of m", end_of_m, "outside range, j =", j)
                 return minimum, 0, j-1, 0, ap_issued
         except AttributeError:
+            # print("AttributeError")
             if(ws.cell(row = j+1, column = 7).value != None):
                 if(missing_date_error == 0):
                     missing_date_error = 1
@@ -384,8 +386,10 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 continue
             ### missing dates should be somewhat frequent in the beginning
             else:
+                print("other problem")
                 return minimum, 0, i, 1, ap_issued
         except TypeError:
+            print("TypeError")
             error_ws.cell(row = COUNT, column = 1).value = file 
             error_ws.cell(row = COUNT, column = 2).value = "Other Error"
             increment()
@@ -420,8 +424,10 @@ def write_output_file(file, file_out, roi, r):
     formula = "=G9-C10+D10+E10+F10"
     thin = Side(border_style="thin", color="000000")
     if(current_date > end_of_quarter):
+        # print("current date is greater than end of quarter")
         ws.insert_rows(r)
     else:
+        # print("current date is not greater than end of quarter, r = ", r+1)
         ws.insert_rows(r+1)
         r+=1
     j = 1
@@ -491,6 +497,7 @@ def process_file(file_in, file_out, file):
         if(EoF):
             p3 = p2
         else:
+            # print("partial roi end of month 3:", end_of_m3)
             p3, error, r, EoF, ap = partial_roi(ws, file, start_of_m3, end_of_m3, r, ap)
             p3 = round(p3, 2)
             if(error):
