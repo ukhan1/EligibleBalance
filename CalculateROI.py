@@ -302,7 +302,10 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
     if(current_date > start_of_m):
         if(i == 9):
             minimum = 0
-        return minimum, 0, i, 0, ap_issued
+            if(end_of_m == end_of_quarter):
+                i+=1        
+            else:
+                return minimum, 0, i, 0, ap_issued
     j = i + 1
     while(current_date <= end_of_m):
         try:
