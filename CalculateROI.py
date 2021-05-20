@@ -305,7 +305,7 @@ def compareStatements(file, calculated, r):
     principal_wb.save(dir_principal)
     
 def verify_balance(d, file):
-    book = load_workbook(os.path.join(d, file))
+    book = load_workbook(os.path.join(d, file), data_only=True)
     ws = book.active
     written_balance = 0
     balance = 0
@@ -330,12 +330,12 @@ def verify_balance(d, file):
         balance = balance + deposit + roi + dividend - withdrawal
         r+=1
     # if(r > 10):
-    #     written_balance = ws.cell(row = r-1, column = 7).value
+    written_balance = ws.cell(row = r-1, column = 7).value
     # else:
     #     written_balance = ws.cell(row = 9, column = 7).value
     balance_ws.cell(row = b_COUNT, column = 1).value = file
     balance_ws.cell(row = b_COUNT, column = 2).value = balance
-    # balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+    balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
     b_increment()
     balance_wb.save(dir_balance)
     print("Total Balance:", balance)
