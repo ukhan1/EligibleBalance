@@ -28,17 +28,26 @@ dir = os.getcwd()
 dir_pre = os.path.join(dir, "Before")
 dir_post = os.path.join(dir, "After")
 dir_error = os.path.join(dir, "error_log.xlsx")
+dir_balance = os.path.join(dir, "verify_statements.xlsx")
 
 if os.path.isfile(dir_error):
-    print ("File exist")
+    # print ("File exist")
     os.remove(dir_error)
-else:
-    print ("File not exist")
+# else:
+#     print ("File not exist")
+    
+if os.path.isfile(dir_balance):
+    # print ("File exist")
+    os.remove(dir_balance)
+# else:
+#     print ("File not exist")    
+    
 error_wb = Workbook()
 error_ws = error_wb.active
 principal_wb = Workbook()
 principal_ws = principal_wb.active
-
+balance_wb = Workbook()
+balance_ws = balance_wb.active
 dir_list = sorted(os.listdir(dir_pre))
 print(dir)
 ##################################
@@ -62,8 +71,9 @@ def startButton():
     global write_principal
     global write_statements
     global compare_statements
+    global verify_statements
     global declared_roi
-    write_principal, write_statements, compare_statements = getBool()
+    write_principal, write_statements, compare_statements, verify_statements = getBool()
     q,y,r,inp,outp = getText()
     try:
         quarter = int(q)
@@ -94,7 +104,7 @@ def startButton():
 
 #Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get(), var3.get()
+    return var1.get(), var2.get(), var3.get(), var4.get()
 def getText():
     global e1
     global e2
@@ -125,6 +135,7 @@ frame.pack()
 var1 = tk.BooleanVar(value=True)
 var2 = tk.BooleanVar(value=False)
 var3 = tk.BooleanVar(value=False)
+var4 = tk.BooleanVar(value=False)
 entryr = declared_roi
 if (tempqtr == 1):
     entryq = 4
@@ -191,7 +202,8 @@ c2 = tk.Checkbutton(bottomFrame3, text = "Write Statements", variable = var2)
 c2.pack()
 c3 = tk.Checkbutton(bottomFrame3, text = "Compare Statements", command = click, variable = var3)
 c3.pack()
-
+c4 = tk.Checkbutton(bottomFrame3, text = "Verify Statements", command = click, variable = var4)
+c4.pack()
 tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
 tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "left")
 
@@ -254,6 +266,10 @@ p_COUNT = 1
 def p_increment():
     global p_COUNT
     p_COUNT = p_COUNT+1
+b_COUNT = 1
+def b_increment():
+    global b_COUNT
+    b_COUNT = b_COUNT+1
 
 def compareStatements(file, calculated, r):
     validation = False;
@@ -288,9 +304,46 @@ def compareStatements(file, calculated, r):
         print("Values do not match")
     principal_wb.save(dir_principal)
     
-        
-    
+def verify_balance(d, file):
+    book = load_workbook(os.path.join(d, file))
+    ws = book.active
+    written_balance = 0
+    balance = 0
+    r = 9
+    while(ws.cell(row = r, column = 7).value != None):
+        if(ws.cell(row = r, column = 3).value != None):
+            withdrawal = ws.cell(row = r, column = 3).value
+        else:
+            withdrawal = 0
+        if(ws.cell(row = r, column = 4).value != None):
+            deposit = ws.cell(row = r, column = 4).value
+        else:
+            deposit = 0
+        if(ws.cell(row = r, column = 5).value != None):
+            roi = ws.cell(row = r, column = 5).value
+        else:
+            roi = 0
+        if(ws.cell(row = r, column = 6).value != None):
+            dividend = ws.cell(row = r, column = 6).value
+        else:
+            dividend = 0
+        balance = balance + deposit + roi + dividend - withdrawal
+        r+=1
+    # if(r > 10):
+    #     written_balance = ws.cell(row = r-1, column = 7).value
+    # else:
+    #     written_balance = ws.cell(row = 9, column = 7).value
+    balance_ws.cell(row = b_COUNT, column = 1).value = file
+    balance_ws.cell(row = b_COUNT, column = 2).value = balance
+    # balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+    b_increment()
+    balance_wb.save(dir_balance)
+    print("Total Balance:", balance)
+    # print("Written Balance:", written_balance)
+    return 
+
 def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
+    #return values: partial roi, error, row, end of file, ap letter issued
     # print("start:", start_of_m, "end:", end_of_m)
     ap_issued = ap
     in_range = 0
@@ -303,7 +356,10 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
         if(i == 9):
             minimum = 0
             if(end_of_m == end_of_quarter):
-                i+=1        
+                if(ws.cell(row = i+1, column = 1).value is None):
+                    return minimum, 0, i, 1, ap_issued
+                else:
+                    i+=1
             else:
                 return minimum, 0, i, 0, ap_issued
     j = i + 1
@@ -389,7 +445,7 @@ def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
                 continue
             ### missing dates should be somewhat frequent in the beginning
             else:
-                print("other problem")
+                # print("other problem")
                 return minimum, 0, i, 1, ap_issued
         except TypeError:
             print("TypeError")
@@ -467,7 +523,6 @@ def process_file(file_in, file_out, file):
     os.chdir(dir_pre)
     book = load_workbook(file_in, data_only = True)
     ws = book.active
-    
     cell = ws.cell(row = r, column = 1).value
     try:
         current_date = date(year = cell.year, month = cell.month, day = cell.day)
@@ -519,6 +574,11 @@ def process_file(file_in, file_out, file):
             p_increment()
         if(write_statements == True):
             write_output_file(file, file_out, roi, r)
+        if(verify_statements == True):
+            if(write_statements == True):
+                verify_balance(dir_post, file)
+            else:
+                verify_balance(dir_pre, file)
        
     except AttributeError:
        print("Missing date in first row")
@@ -549,6 +609,7 @@ def process_file(file_in, file_out, file):
        book.close() 
        return
     book.close()
+    
 if(write_principal == True):
     principal_ws.cell(row =  1, column = 1).value = "File No"
     principal_ws.cell(row =  1, column = 2).value = "P1"
@@ -558,9 +619,14 @@ if(write_principal == True):
     principal_ws.cell(row =  1, column = 6).value = "Calculated ROI"
     principal_ws.cell(row =  1, column = 7).value = "Observed ROI"
     principal_ws.cell(row =  1, column = 8).value = "Values Match?"
-    
     p_increment()
-
+    
+if(verify_statements == True):
+    balance_ws.cell(row = 1, column = 1).value = "File"
+    balance_ws.cell(row = 1, column = 1).value = "Calculated Balance"
+    balance_ws.cell(row = 1, column = 1).value = "Written Balance"
+    b_increment()
+    
 if(compare_statements == True):
     principal_wb = load_workbook(dir_principal)
     principal_ws = principal_wb.active
