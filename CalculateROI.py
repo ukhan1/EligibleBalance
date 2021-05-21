@@ -310,7 +310,7 @@ def verify_balance(d, file):
     written_balance = 0
     balance = 0
     r = 9
-    while(ws.cell(row = r, column = 7).value != None):
+    while((ws.cell(row = r, column = 7).value != None) | (ws.cell(row = r+1, column = 7).value != None) | (ws.cell(row = r+2, column = 7).value != None)):
         if(ws.cell(row = r, column = 3).value != None):
             withdrawal = ws.cell(row = r, column = 3).value
         else:
@@ -332,6 +332,7 @@ def verify_balance(d, file):
     # if(r > 10):
     written_balance = ws.cell(row = r-1, column = 7).value
     # else:
+    balance = round(balance, 2)
     #     written_balance = ws.cell(row = 9, column = 7).value
     balance_ws.cell(row = b_COUNT, column = 1).value = file
     balance_ws.cell(row = b_COUNT, column = 2).value = balance
