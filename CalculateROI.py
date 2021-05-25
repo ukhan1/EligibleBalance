@@ -527,7 +527,7 @@ def process_file(file_in, file_out, file):
             out_of_range = 1
             print("First date is after the current quarter. Continuing...")
             error_ws.cell(row = COUNT, column = 1).value = file 
-            error_ws.cell(row = COUNT, column = 3).value = "After quarter"
+            error_ws.cell(row = COUNT, column = 2).value = "After quarter"
             increment()
             error_wb.save(dir_error)
             return
