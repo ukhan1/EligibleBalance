@@ -311,27 +311,22 @@ def verify_balance(d, file):
     balance = 0
     r = 9
     while((ws.cell(row = r, column = 7).value != None) | (ws.cell(row = r+1, column = 7).value != None) | (ws.cell(row = r+2, column = 7).value != None)):
-        if(ws.cell(row = r, column = 3).value != None):
+        withdrawal = deposit = dividend = roi = 0
+        
+        if((ws.cell(row = r, column = 3).value != None) & (ws.cell(row = r, column = 3).value != " ")):
             withdrawal = ws.cell(row = r, column = 3).value
-        else:
-            withdrawal = 0
-        if(ws.cell(row = r, column = 4).value != None):
+        if((ws.cell(row = r, column = 4).value != None) & (ws.cell(row = r, column = 4).value != " ")):
             deposit = ws.cell(row = r, column = 4).value
-        else:
-            deposit = 0
-        if(ws.cell(row = r, column = 5).value != None):
+        if((ws.cell(row = r, column = 5).value != None) & (ws.cell(row = r, column = 5).value != " ")):
             roi = ws.cell(row = r, column = 5).value
-        else:
-            roi = 0
-        if(ws.cell(row = r, column = 6).value != None):
+        if((ws.cell(row = r, column = 6).value != None) & (ws.cell(row = r, column = 6).value != " ")):
             dividend = ws.cell(row = r, column = 6).value
-        else:
-            dividend = 0
         balance = balance + deposit + roi + dividend - withdrawal
         r+=1
     # if(r > 10):
     written_balance = ws.cell(row = r-1, column = 7).value
-    # else:
+   
+    written_balance = round(written_balance,2)
     balance = round(balance, 2)
     #     written_balance = ws.cell(row = 9, column = 7).value
     balance_ws.cell(row = b_COUNT, column = 1).value = file
@@ -339,6 +334,7 @@ def verify_balance(d, file):
     balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
     b_increment()
     balance_wb.save(dir_balance)
+    print("Written Balance:", written_balance)
     print("Total Balance:", balance)
     # print("Written Balance:", written_balance)
     return 
