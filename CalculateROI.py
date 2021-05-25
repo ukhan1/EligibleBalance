@@ -312,15 +312,18 @@ def verify_balance(d, file):
     r = 9
     while((ws.cell(row = r, column = 7).value != None) | (ws.cell(row = r+1, column = 7).value != None) | (ws.cell(row = r+2, column = 7).value != None)):
         withdrawal = deposit = dividend = roi = 0
-        
-        if((ws.cell(row = r, column = 3).value != None) & (ws.cell(row = r, column = 3).value != " ")):
-            withdrawal = ws.cell(row = r, column = 3).value
-        if((ws.cell(row = r, column = 4).value != None) & (ws.cell(row = r, column = 4).value != " ")):
-            deposit = ws.cell(row = r, column = 4).value
-        if((ws.cell(row = r, column = 5).value != None) & (ws.cell(row = r, column = 5).value != " ")):
-            roi = ws.cell(row = r, column = 5).value
-        if((ws.cell(row = r, column = 6).value != None) & (ws.cell(row = r, column = 6).value != " ")):
-            dividend = ws.cell(row = r, column = 6).value
+        if(ws.cell(row = r, column = 3).value != None):
+            if(isinstance(ws.cell(row = r, column = 3).value, float) | isinstance(ws.cell(row = r, column = 3).value, int)):
+                withdrawal = ws.cell(row = r, column = 3).value
+        if(ws.cell(row = r, column = 4).value != None):
+            if(isinstance(ws.cell(row = r, column = 4).value, float) | isinstance(ws.cell(row = r, column = 4).value, int)):
+                deposit = ws.cell(row = r, column = 4).value
+        if(ws.cell(row = r, column = 5).value != None):
+            if(isinstance(ws.cell(row = r, column = 5).value, float) | isinstance(ws.cell(row = r, column = 5).value, int)):
+                roi = ws.cell(row = r, column = 5).value
+        if(ws.cell(row = r, column = 6).value != None):
+            if(isinstance(ws.cell(row = r, column = 6).value, float) | isinstance(ws.cell(row = r, column = 6).value, int)):
+                dividend = ws.cell(row = r, column = 6).value
         balance = balance + deposit + roi + dividend - withdrawal
         r+=1
     # if(r > 10):
