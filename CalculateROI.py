@@ -29,7 +29,10 @@ dir_pre = os.path.join(dir, "Before")
 dir_post = os.path.join(dir, "After")
 dir_error = os.path.join(dir, "error_log.xlsx")
 dir_balance = os.path.join(dir, "verify_statements.xlsx")
-
+dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
+dir_transactions = os.path.join(dir, "Transactions")
+dir_transin = os.path.join(dir, "In")
+dir_transout = os.path.join(dir, "Out")
 if os.path.isfile(dir_error):
     # print ("File exist")
     os.remove(dir_error)
@@ -48,6 +51,7 @@ principal_wb = Workbook()
 principal_ws = principal_wb.active
 balance_wb = Workbook()
 balance_ws = balance_wb.active
+dir_tlist = os.listdir(dir_transactions)
 dir_list = sorted(os.listdir(dir_pre))
 print(dir)
 ##################################
@@ -68,13 +72,17 @@ def startButton():
     global dir_pre
     global dir_post
     global dir_list
+    global dir_transactions
+    global dir_transin
+    global dir_transout
     global write_principal
     global write_statements
     global compare_statements
     global verify_statements
+    global transactions_option
     global declared_roi
-    write_principal, write_statements, compare_statements, verify_statements = getBool()
-    q,y,r,inp,outp = getText()
+    write_principal, write_statements, compare_statements, verify_statements, transactions_option = getBool()
+    q,y,r,inp,outp,trns,tinp,toutp = getText()
     try:
         quarter = int(q)
         year = int(y)
@@ -83,6 +91,9 @@ def startButton():
             raise ValueError
         dir_pre = inp
         dir_post = outp
+        dir_transactions = trns
+        dir_transin = tinp
+        dir_transout = toutp
         if(year > today.year):
             print("Invalid year, please try again")
         elif((year == today.year) & (tempqtr <= quarter)):
@@ -104,20 +115,26 @@ def startButton():
 
 #Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get(), var3.get(), var4.get()
+    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get()
 def getText():
     global e1
     global e2
     global e3
     global e4
     global e5
+    global e6
+    global e7
+    global e8
     print(var1.get())
     q = e1.get()
     y = e2.get()
     r = e3.get()
     inp= e4.get()
     outp= e5.get()
-    return q,y,r,inp,outp
+    trns = e6.get()
+    tinp = e7.get()
+    toutp = e8.get()
+    return q,y,r,inp,outp,trns,tinp,toutp
 def click():
     if(var3.get() == False):
         c1.config(state = "normal")
@@ -136,6 +153,7 @@ var1 = tk.BooleanVar(value=True)
 var2 = tk.BooleanVar(value=False)
 var3 = tk.BooleanVar(value=False)
 var4 = tk.BooleanVar(value=False)
+var5 = tk.BooleanVar(value=False)
 entryr = declared_roi
 if (tempqtr == 1):
     entryq = 4
@@ -149,7 +167,11 @@ middleFrame.pack(side = "bottom")
 rightFrame1 = tk.Frame(middleFrame)
 rightFrame1.pack(side = "right")
 rightFrame2 = tk.Frame(rightFrame1)
-rightFrame2.pack(side = "bottom")
+rightFrame2.pack(side = "right")
+rightFrame3 = tk.Frame(rightFrame2)
+rightFrame3.pack(side = "bottom")
+rightFrame4 = tk.Frame(rightFrame3)
+rightFrame4.pack(side = "bottom")
 bottomFrame1 = tk.Frame(middleFrame)
 bottomFrame1.pack(side = "bottom")
 bottomFrame2 = tk.Frame(bottomFrame1)
@@ -176,14 +198,35 @@ e3.pack(side = "left")
 tk.Label(middleFrame, text = "%").pack(side = "left")
 
 #Setting 2nd Menu Frames
-tk.Label(rightFrame1,text = "rightFrame1, 1").pack()
-tk.Label(rightFrame1,text = "rightFrame1, 2").pack()
-tk.Label(rightFrame1,text = "rightFrame1, 3").pack()
-tk.Label(rightFrame1,text = "rightFrame1, 4").pack()
-tk.Label(rightFrame2,text = "rightFrame2, 1").pack()
-tk.Label(rightFrame2,text = "rightFrame2, 2").pack()
-tk.Label(rightFrame2,text = "rightFrame2, 3").pack()
+tk.Label(rightFrame1,text = "").pack(side = "top")
+tk.Label(rightFrame1,text = "Transactions").pack(side = "top")
+tk.Label(rightFrame1,text = "Input Path").pack(side = "top")
+# tk.Label(rightFrame1).pack(side = "top")
 
+tk.Label(rightFrame1, text = "Output Path").pack(side = "top")
+c5 = tk.Checkbutton(rightFrame1, text = "Add Transaction", variable = var5)
+c5.pack(side = "top")
+tk.Label(rightFrame1).pack(side = "top")
+tk.Label(rightFrame1).pack(side = "top")
+tk.Label(rightFrame1).pack(side = "top")
+tk.Label(rightFrame1).pack(side = "top")
+
+tk.Label(rightFrame2, text = "Add Transaction").pack(side = "top")
+e6 = tk.Entry(rightFrame2, width = 50)
+e6.insert(0, dir_transactions)
+e6.pack(side = "top")
+e7 = tk.Entry(rightFrame2, width = 50)
+e7.insert(0, dir_transin)
+e7.pack(side = "top")
+e8 = tk.Entry(rightFrame2, width = 50)
+e8.insert(0, dir_transout)
+e8.pack(side = "top")
+# tk.Label(rightFrame2).pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
 #Creating and setting Input and Output paths
 tk.Label(bottomFrame1, text = "Input Path").pack(side = "left")
 e4 = tk.Entry(bottomFrame1, width = 50)
@@ -342,6 +385,150 @@ def verify_balance(d, file):
     # print("Written Balance:", written_balance)
     return 
 
+
+### Analyzing entire Transaction file
+def add_transaction(file_in):
+    book = load_workbook(file_in, data_only = True)
+    ws = book.active
+    transaction_str = "Deposit_Withdrawal" 
+    deposit_str = "Deposit Investor"
+    withdraw_str = "Withdrawal Investor"
+    #Formatting
+    origin = 'G' + str(10)
+    formula = "=G9-C10+D10+E10+F10"
+    thin = Side(border_style="thin", color="000000")
+    # Finding max row 
+    z = ws.max_row
+    while(ws.cell(row = z, column = 1).value == None):
+        z-=1
+    # print("Max Row:",z)
+    r = 1
+    #Until we reach the last transaction
+    while(r < z):
+        #If it is a withdrawal or deposit, analyze the transaction
+        if (transaction_str in ws.cell(row = r, column = 3).value):
+            y = 2
+            previous_type = 0
+            transaction_type = 0
+            current_cell = ws.cell(row = r, column = 2).value
+            current_date = date(year = current_cell.year, month = current_cell.month, day = current_cell.day)
+            account_id = ws.cell(row = r, column = 4).value
+            account_name = ws.cell(row = r, column = 5).value
+            if(deposit_str in ws.cell(row = r, column = 6).value):
+                transaction_type = 1
+                description = "Deposit Check"
+            elif(withdraw_str in ws.cell(row = r, column = 6).value):
+                transaction_type = 2
+                description = "Withdrawal Check"
+            else:
+                print("Transaction Type not correctly specified")
+                error_ws.cell(row = COUNT, column = 1).value = file 
+                error_ws.cell(row = COUNT, column = 2).value = "Incorrect transaction type"
+                error_ws.cell(row = COUNT, column = 3).value = account_name
+                error_ws.cell(row = COUNT, column = 4).value = account_id
+                error_ws.cell(row = COUNT, column = 5).value = ws.cell(row = r, column = 6).value
+                increment()
+                error_wb.save(dir_error)
+                r+=1
+                continue
+            # description = ws.cell(row = r, column = 7).value
+            document = str(ws.cell(row = r, column = 8).value).strip()
+            description = str(description) + str(" # ") + document
+            amount = ws.cell(row = r, column = 10).value
+            # print("Current date:", current_date)
+            print("Account id:", account_id)
+            print("Account name:", account_name)
+            #Look for the account id
+            while((account_ws.cell(row = y, column = 3).value != account_id) & (y <= x)):
+                y+=1
+            #Match with the filename
+            target = account_ws.cell(row = y, column = 1).value
+            if(target == None):
+                print("No associated account id with that holder")
+                error_ws.cell(row = COUNT, column = 1).value = file 
+                error_ws.cell(row = COUNT, column = 2).value = "No Matching Account ID"
+                error_ws.cell(row = COUNT, column = 3).value = account_name
+                error_ws.cell(row = COUNT, column = 4).value = account_id
+                increment()
+                error_wb.save(dir_error)
+            else:
+                target_dir = os.path.join(dir_transin, target)
+                print(target_dir)
+                target_book = load_workbook(target_dir)
+                target_ws = target_book.active
+                m = target_ws.max_row
+                while(target_ws.cell(row = m, column = 1).value == None):
+                    m-=1
+                #Find the target date
+                target_cell = target_ws.cell(row = m, column = 1).value
+                target_date = date(year = target_cell.year, month = target_cell.month, day = target_cell.day)
+                while((target_date > current_date) & (m!=9)):
+                    m-=1
+                    target_cell = target_ws.cell(row = m, column = 1).value
+                    target_date = date(year = target_cell.year, month = target_cell.month, day = target_cell.day)
+                
+                #Check for previous deposit/withdrawal type
+                if(target_ws.cell(row=m,column=3).value != None):
+                    previous_type = 2
+                elif(target_ws.cell(row=m,column = 4).value != None):
+                    previous_type = 1
+                else:
+                    #Neither deposit nor withdrawal
+                    previous_type = 0
+                # print("Target date:", target_date)
+                # print("Current date:", current_date)
+                #Compare check numbers
+                previous_document = str(target_ws.cell(row = m, column = 2).value.partition(" # ")[2]).strip()
+                # print("Previous Document:",previous_document)
+                # print("Current Document:",document)
+                # print("Previous type:", previous_type, "Current Type:",transaction_type)
+                if((previous_document == document) & (current_date == target_date)):
+                    if(((previous_type == 1) & (transaction_type == 2)) & (document != "AHC")):
+                        print("Same day deposit/withdrawal")
+                    else:
+                        print("Observed duplicate check no.")
+                        error_ws.cell(row = COUNT, column = 1).value = file 
+                        error_ws.cell(row = COUNT, column = 2).value = "Same date duplicate Check no."
+                        error_ws.cell(row = COUNT, column = 3).value = account_name
+                        error_ws.cell(row = COUNT, column = 4).value = account_id
+                        error_ws.cell(row = COUNT, column = 5).value = target_date
+                        error_ws.cell(row = COUNT, column = 6).value = document
+                        increment()
+                        error_wb.save(dir_error)
+                        r+=1
+                        continue
+                #Insert new row with the extracted information
+                target_ws.insert_rows(m+1)
+                j = 1
+                while(j<9):
+                    cell = target_ws.cell(row = 9, column = j)
+                    new_cell = target_ws.cell(row=m+1, column = j)
+                    if cell.has_style:
+                        new_cell._style = copy(cell._style)
+                    else:
+                        print("No style detected")
+                        target_ws.cell(row = m+1, column = j).border = Border(top = thin, right = thin, left = thin, bottom = thin)        
+                    new_cell.font = Font(bold = None)
+                    j+=1
+                
+                target_ws.cell(row = m+1, column = 1).value = current_date
+                target_ws.cell(row = m+1, column = 2).value = description
+                #If its a deposit
+                if(transaction_type == 1):
+                    target_ws.cell(row = m+1, column = 4).value = amount
+                #Else its a withdrawal
+                else:
+                    target_ws.cell(row = m+1, column = 3).value = amount
+                fcell = 'G' + str(m)
+                gcell = 'G' + str(m+1)
+                target_ws[gcell].value = Translator(formula, origin).translate_formula(fcell)
+                if(target_ws[gcell].value != None):
+                    target_ws[gcell].value = Translator(formula, origin).translate_formula(gcell)
+                target_book.save(os.path.join(dir_transout,target))
+                target_book.close()
+        # otherwise skip
+        r+=1
+    print("end of transactions in file")
 def partial_roi(ws, file, start_of_m, end_of_m, i, ap):
     #return values: partial roi, error, row, end of file, ap letter issued
     # print("start:", start_of_m, "end:", end_of_m)
@@ -512,9 +699,9 @@ def write_output_file(file, file_out, roi, r):
     print("End of file")
     book.save(file_out)
     book.close()
+ 
     
 def process_file(file_in, file_out, file):
-    out_of_range = 0
     r = 9
     p1 = 0
     p2 = 0
@@ -523,11 +710,14 @@ def process_file(file_in, file_out, file):
     os.chdir(dir_pre)
     book = load_workbook(file_in, data_only = True)
     ws = book.active
+    z = ws.max_row
+    while(ws.cell(row = z, column = 1).value == None):
+        z-=1
+    print(z)
     cell = ws.cell(row = r, column = 1).value
     try:
         current_date = date(year = cell.year, month = cell.month, day = cell.day)
         if(current_date > end_of_m3):
-            out_of_range = 1
             print("First date is after the current quarter. Continuing...")
             error_ws.cell(row = COUNT, column = 1).value = file 
             error_ws.cell(row = COUNT, column = 2).value = "After quarter"
@@ -555,7 +745,6 @@ def process_file(file_in, file_out, file):
         if(EoF):
             p3 = p2
         else:
-            # print("partial roi end of month 3:", end_of_m3)
             p3, error, r, EoF, ap = partial_roi(ws, file, start_of_m3, end_of_m3, r, ap)
             p3 = round(p3, 2)
             if(error):
@@ -569,17 +758,7 @@ def process_file(file_in, file_out, file):
         avg = (p1 + p2 + p3)/3
         roi = (p1 + p2 + p3) * declared_roi/(3*100)
         roi = round(roi, 2)
-        if(write_principal == True):
-            write_principal_column(file, p1, p2, p3, avg, roi)
-            p_increment()
-        if(write_statements == True):
-            write_output_file(file, file_out, roi, r)
-        if(verify_statements == True):
-            if(write_statements == True):
-                verify_balance(dir_post, file)
-            else:
-                verify_balance(dir_pre, file)
-       
+
     except AttributeError:
        print("Missing date in first row")
        error_ws.cell(row = COUNT, column = 1).value = file 
@@ -608,6 +787,16 @@ def process_file(file_in, file_out, file):
        error_wb.save(dir_error)
        book.close() 
        return
+    if(write_principal == True):
+        write_principal_column(file, p1, p2, p3, avg, roi)
+        p_increment()
+    if(write_statements == True):
+        write_output_file(file, file_out, roi, r)
+    if(verify_statements == True):
+        if(write_statements == True):
+            verify_balance(dir_post, file)
+        else:
+            verify_balance(dir_pre, file)
     book.close()
     
 if(write_principal == True):
@@ -626,7 +815,20 @@ if(verify_statements == True):
     balance_ws.cell(row = 1, column = 1).value = "Calculated Balance"
     balance_ws.cell(row = 1, column = 1).value = "Written Balance"
     b_increment()
-    
+
+if(transactions_option == True):
+    account_book = load_workbook(dir_key)
+    account_ws = account_book.active
+    x = account_ws.max_row
+    while(account_ws.cell(row = x, column = 1).value == None):
+        x-=1
+    print(x, "amount of accounts")
+    print(account_ws.cell(row = 1, column = 1).value)
+    for file in filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_tlist):
+        file_in = os.path.join(dir_transactions, file)
+        print("Transaction file:", file_in)
+        add_transaction(file_in)   
+    account_book.close()
 if(compare_statements == True):
     principal_wb = load_workbook(dir_principal)
     principal_ws = principal_wb.active
@@ -639,12 +841,13 @@ if(compare_statements == True):
         compareStatements(fileno, calculated_roi, i)
         i+=1
 else:
-    for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
-        file_in = os.path.join(dir_pre, file)
-        file_out = os.path.join(dir_post, file)
-        #file_in = file_in.replace(os.sep, '/')
-        print(file_in)
-        process_file(file_in, file_out, file)   
+    if(write_principal | write_statements | verify_statements | compare_statements):
+        for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
+            file_in = os.path.join(dir_pre, file)
+            file_out = os.path.join(dir_post, file)
+            #file_in = file_in.replace(os.sep, '/')
+            print(file_in)
+            process_file(file_in, file_out, file)   
             
     
         
