@@ -32,7 +32,7 @@ dir_balance = os.path.join(dir, "verify_statements.xlsx")
 dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
-dir_transout = os.path.join(dir, "Out")
+# dir_transout = os.path.join(dir, "Out")
 if os.path.isfile(dir_error):
     # print ("File exist")
     os.remove(dir_error)
@@ -74,7 +74,7 @@ def startButton():
     global dir_list
     global dir_transactions
     global dir_transin
-    global dir_transout
+    # global dir_transout
     global write_principal
     global write_statements
     global compare_statements
@@ -82,7 +82,7 @@ def startButton():
     global transactions_option
     global declared_roi
     write_principal, write_statements, compare_statements, verify_statements, transactions_option = getBool()
-    q,y,r,inp,outp,trns,tinp,toutp = getText()
+    q,y,r,inp,outp,trns,tinp = getText()
     try:
         quarter = int(q)
         year = int(y)
@@ -93,7 +93,7 @@ def startButton():
         dir_post = outp
         dir_transactions = trns
         dir_transin = tinp
-        dir_transout = toutp
+        # dir_transout = toutp
         if(year > today.year):
             print("Invalid year, please try again")
         elif((year == today.year) & (tempqtr <= quarter)):
@@ -124,7 +124,7 @@ def getText():
     global e5
     global e6
     global e7
-    global e8
+    # global e8
     print(var1.get())
     q = e1.get()
     y = e2.get()
@@ -133,8 +133,8 @@ def getText():
     outp= e5.get()
     trns = e6.get()
     tinp = e7.get()
-    toutp = e8.get()
-    return q,y,r,inp,outp,trns,tinp,toutp
+    # toutp = e8.get()
+    return q,y,r,inp,outp,trns,tinp
 def click():
     if(var3.get() == False):
         c1.config(state = "normal")
@@ -201,9 +201,9 @@ tk.Label(middleFrame, text = "%").pack(side = "left")
 tk.Label(rightFrame1,text = "").pack(side = "top")
 tk.Label(rightFrame1,text = "Transactions").pack(side = "top")
 tk.Label(rightFrame1,text = "Input Path").pack(side = "top")
-# tk.Label(rightFrame1).pack(side = "top")
+tk.Label(rightFrame1).pack(side = "top")
 
-tk.Label(rightFrame1, text = "Output Path").pack(side = "top")
+# tk.Label(rightFrame1, text = "Output Path").pack(side = "top")
 c5 = tk.Checkbutton(rightFrame1, text = "Add Transaction", variable = var5)
 c5.pack(side = "top")
 tk.Label(rightFrame1).pack(side = "top")
@@ -218,10 +218,10 @@ e6.pack(side = "top")
 e7 = tk.Entry(rightFrame2, width = 50)
 e7.insert(0, dir_transin)
 e7.pack(side = "top")
-e8 = tk.Entry(rightFrame2, width = 50)
-e8.insert(0, dir_transout)
-e8.pack(side = "top")
-# tk.Label(rightFrame2).pack(side = "top")
+# e8 = tk.Entry(rightFrame2, width = 50)
+# e8.insert(0, dir_transout)
+# e8.pack(side = "top")
+tk.Label(rightFrame2).pack(side = "top")
 tk.Label(rightFrame2).pack(side = "top")
 tk.Label(rightFrame2).pack(side = "top")
 tk.Label(rightFrame2).pack(side = "top")
@@ -405,127 +405,137 @@ def add_transaction(file_in):
     r = 1
     #Until we reach the last transaction
     while(r < z):
+        try:
         #If it is a withdrawal or deposit, analyze the transaction
-        if (transaction_str in ws.cell(row = r, column = 3).value):
-            y = 2
-            previous_type = 0
-            transaction_type = 0
-            current_cell = ws.cell(row = r, column = 2).value
-            current_date = date(year = current_cell.year, month = current_cell.month, day = current_cell.day)
-            account_id = ws.cell(row = r, column = 4).value
-            account_name = ws.cell(row = r, column = 5).value
-            if(deposit_str in ws.cell(row = r, column = 6).value):
-                transaction_type = 1
-                description = "Deposit Check"
-            elif(withdraw_str in ws.cell(row = r, column = 6).value):
-                transaction_type = 2
-                description = "Withdrawal Check"
-            else:
-                print("Transaction Type not correctly specified")
-                error_ws.cell(row = COUNT, column = 1).value = file 
-                error_ws.cell(row = COUNT, column = 2).value = "Incorrect transaction type"
-                error_ws.cell(row = COUNT, column = 3).value = account_name
-                error_ws.cell(row = COUNT, column = 4).value = account_id
-                error_ws.cell(row = COUNT, column = 5).value = ws.cell(row = r, column = 6).value
-                increment()
-                error_wb.save(dir_error)
-                r+=1
-                continue
-            # description = ws.cell(row = r, column = 7).value
-            document = str(ws.cell(row = r, column = 8).value).strip()
-            description = str(description) + str(" # ") + document
-            amount = ws.cell(row = r, column = 10).value
-            # print("Current date:", current_date)
-            print("Account id:", account_id)
-            print("Account name:", account_name)
-            #Look for the account id
-            while((account_ws.cell(row = y, column = 3).value != account_id) & (y <= x)):
-                y+=1
-            #Match with the filename
-            target = account_ws.cell(row = y, column = 1).value
-            if(target == None):
-                print("No associated account id with that holder")
-                error_ws.cell(row = COUNT, column = 1).value = file 
-                error_ws.cell(row = COUNT, column = 2).value = "No Matching Account ID"
-                error_ws.cell(row = COUNT, column = 3).value = account_name
-                error_ws.cell(row = COUNT, column = 4).value = account_id
-                increment()
-                error_wb.save(dir_error)
-            else:
-                target_dir = os.path.join(dir_transin, target)
-                print(target_dir)
-                target_book = load_workbook(target_dir)
-                target_ws = target_book.active
-                m = target_ws.max_row
-                while(target_ws.cell(row = m, column = 1).value == None):
-                    m-=1
-                #Find the target date
-                target_cell = target_ws.cell(row = m, column = 1).value
-                target_date = date(year = target_cell.year, month = target_cell.month, day = target_cell.day)
-                while((target_date > current_date) & (m!=9)):
-                    m-=1
+            if (transaction_str in ws.cell(row = r, column = 3).value):
+                y = 2
+                previous_type = 0
+                transaction_type = 0
+                current_cell = ws.cell(row = r, column = 2).value
+                current_date = date(year = current_cell.year, month = current_cell.month, day = current_cell.day)
+                account_id = ws.cell(row = r, column = 4).value
+                account_name = ws.cell(row = r, column = 5).value
+                if(deposit_str in ws.cell(row = r, column = 6).value):
+                    transaction_type = 1
+                    description = "Deposit Check"
+                elif(withdraw_str in ws.cell(row = r, column = 6).value):
+                    transaction_type = 2
+                    description = "Withdrawal Check"
+                else:
+                    print("Transaction Type not correctly specified")
+                    error_ws.cell(row = COUNT, column = 1).value = file 
+                    error_ws.cell(row = COUNT, column = 2).value = "Incorrect transaction type"
+                    error_ws.cell(row = COUNT, column = 3).value = account_name
+                    error_ws.cell(row = COUNT, column = 4).value = account_id
+                    error_ws.cell(row = COUNT, column = 5).value = ws.cell(row = r, column = 6).value
+                    increment()
+                    error_wb.save(dir_error)
+                    r+=1
+                    continue
+                # description = ws.cell(row = r, column = 7).value
+                document = str(ws.cell(row = r, column = 8).value).strip()
+                description = str(description) + str(" # ") + document
+                amount = ws.cell(row = r, column = 10).value
+                # print("Current date:", current_date)
+                print("Account id:", account_id)
+                print("Account name:", account_name)
+                #Look for the account id
+                while((account_ws.cell(row = y, column = 3).value != account_id) & (y <= x)):
+                    y+=1
+                #Match with the filename
+                target = account_ws.cell(row = y, column = 1).value
+                if(target == None):
+                    print("No associated account id with that holder")
+                    error_ws.cell(row = COUNT, column = 1).value = file 
+                    error_ws.cell(row = COUNT, column = 2).value = "No Matching Account ID"
+                    error_ws.cell(row = COUNT, column = 3).value = account_name
+                    error_ws.cell(row = COUNT, column = 4).value = account_id
+                    increment()
+                    error_wb.save(dir_error)
+                else:
+                    target_dir = os.path.join(dir_transin, target)
+                    print(target_dir)
+                    target_book = load_workbook(target_dir)
+                    target_ws = target_book.active
+                    m = target_ws.max_row
+                    while(target_ws.cell(row = m, column = 1).value == None):
+                        m-=1
+                    #Find the target date
                     target_cell = target_ws.cell(row = m, column = 1).value
                     target_date = date(year = target_cell.year, month = target_cell.month, day = target_cell.day)
-                
-                #Check for previous deposit/withdrawal type
-                if(target_ws.cell(row=m,column=3).value != None):
-                    previous_type = 2
-                elif(target_ws.cell(row=m,column = 4).value != None):
-                    previous_type = 1
-                else:
-                    #Neither deposit nor withdrawal
-                    previous_type = 0
-                # print("Target date:", target_date)
-                # print("Current date:", current_date)
-                #Compare check numbers
-                previous_document = str(target_ws.cell(row = m, column = 2).value.partition(" # ")[2]).strip()
-                # print("Previous Document:",previous_document)
-                # print("Current Document:",document)
-                # print("Previous type:", previous_type, "Current Type:",transaction_type)
-                if((previous_document == document) & (current_date == target_date)):
-                    if(((previous_type == 1) & (transaction_type == 2)) & (document != "AHC")):
-                        print("Same day deposit/withdrawal")
+                    while((target_date > current_date) & (m!=9)):
+                        m-=1
+                        target_cell = target_ws.cell(row = m, column = 1).value
+                        target_date = date(year = target_cell.year, month = target_cell.month, day = target_cell.day)
+                    #Check for previous deposit/withdrawal type
+                    if(target_ws.cell(row=m,column=3).value != None):
+                        previous_type = 2
+                    elif(target_ws.cell(row=m,column = 4).value != None):
+                        previous_type = 1
                     else:
-                        print("Observed duplicate check no.")
-                        error_ws.cell(row = COUNT, column = 1).value = file 
-                        error_ws.cell(row = COUNT, column = 2).value = "Same date duplicate Check no."
-                        error_ws.cell(row = COUNT, column = 3).value = account_name
-                        error_ws.cell(row = COUNT, column = 4).value = account_id
-                        error_ws.cell(row = COUNT, column = 5).value = target_date
-                        error_ws.cell(row = COUNT, column = 6).value = document
-                        increment()
-                        error_wb.save(dir_error)
-                        r+=1
-                        continue
-                #Insert new row with the extracted information
-                target_ws.insert_rows(m+1)
-                j = 1
-                while(j<9):
-                    cell = target_ws.cell(row = 9, column = j)
-                    new_cell = target_ws.cell(row=m+1, column = j)
-                    if cell.has_style:
-                        new_cell._style = copy(cell._style)
+                        #Neither deposit nor withdrawal
+                        previous_type = 0
+                    # print("Target date:", target_date)
+                    # print("Current date:", current_date)
+                    #Compare check numbers
+                    previous_document = str(target_ws.cell(row = m, column = 2).value.partition(" # ")[2]).strip()
+                    # print("Previous Document:",previous_document)
+                    # print("Current Document:",document)
+                    # print("Previous type:", previous_type, "Current Type:",transaction_type)
+                    if((previous_document == document) & (current_date == target_date)):
+                        if(((previous_type == 1) & (transaction_type == 2)) & (document != "AHC")):
+                            print("Same day deposit/withdrawal")
+                        else:
+                            print("Observed duplicate check no.")
+                            error_ws.cell(row = COUNT, column = 1).value = file 
+                            error_ws.cell(row = COUNT, column = 2).value = "Same date duplicate Check no."
+                            error_ws.cell(row = COUNT, column = 3).value = account_name
+                            error_ws.cell(row = COUNT, column = 4).value = account_id
+                            error_ws.cell(row = COUNT, column = 5).value = target_date
+                            error_ws.cell(row = COUNT, column = 6).value = document
+                            increment()
+                            error_wb.save(dir_error)
+                            r+=1
+                            continue
+                    #Insert new row with the extracted information
+                    target_ws.insert_rows(m+1)
+                    j = 1
+                    while(j<9):
+                        cell = target_ws.cell(row = 9, column = j)
+                        new_cell = target_ws.cell(row=m+1, column = j)
+                        if cell.has_style:
+                            new_cell._style = copy(cell._style)
+                        else:
+                            print("No style detected")
+                            target_ws.cell(row = m+1, column = j).border = Border(top = thin, right = thin, left = thin, bottom = thin)        
+                        new_cell.font = Font(bold = None)
+                        j+=1
+                    target_ws.cell(row = m+1, column = 1).value = current_date
+                    target_ws.cell(row = m+1, column = 2).value = description
+                    #If its a deposit
+                    if(transaction_type == 1):
+                        target_ws.cell(row = m+1, column = 4).value = amount
+                    #Else its a withdrawal
                     else:
-                        print("No style detected")
-                        target_ws.cell(row = m+1, column = j).border = Border(top = thin, right = thin, left = thin, bottom = thin)        
-                    new_cell.font = Font(bold = None)
-                    j+=1
-                
-                target_ws.cell(row = m+1, column = 1).value = current_date
-                target_ws.cell(row = m+1, column = 2).value = description
-                #If its a deposit
-                if(transaction_type == 1):
-                    target_ws.cell(row = m+1, column = 4).value = amount
-                #Else its a withdrawal
-                else:
-                    target_ws.cell(row = m+1, column = 3).value = amount
-                fcell = 'G' + str(m)
-                gcell = 'G' + str(m+1)
-                target_ws[gcell].value = Translator(formula, origin).translate_formula(fcell)
-                if(target_ws[gcell].value != None):
-                    target_ws[gcell].value = Translator(formula, origin).translate_formula(gcell)
-                target_book.save(os.path.join(dir_transout,target))
-                target_book.close()
+                        target_ws.cell(row = m+1, column = 3).value = amount
+                    fcell = 'G' + str(m)
+                    gcell = 'G' + str(m+1)
+                    target_ws[gcell].value = Translator(formula, origin).translate_formula(fcell)
+                    if(target_ws[gcell].value != None):
+                        target_ws[gcell].value = Translator(formula, origin).translate_formula(gcell)
+                    target_book.save(target_dir)
+                    target_book.close()
+        except KeyboardInterrupt:
+            sys.exit()
+        except:
+            print("Unexpected Error")
+            error_ws.cell(row = COUNT, column = 1).value = file 
+            error_ws.cell(row = COUNT, column = 2).value = "Needs Review"
+            error_ws.cell(row = COUNT, column = 3).value = account_id
+            increment()
+            error_wb.save(dir_error)
+            r+=1
+            continue                    
         # otherwise skip
         r+=1
     print("end of transactions in file")
