@@ -370,18 +370,26 @@ def verify_balance(d, file):
         balance = balance + deposit + roi + dividend - withdrawal
         r+=1
     # if(r > 10):
-    written_balance = ws.cell(row = r-1, column = 7).value
-   
-    written_balance = round(written_balance,2)
-    balance = round(balance, 2)
-    #     written_balance = ws.cell(row = 9, column = 7).value
-    balance_ws.cell(row = b_COUNT, column = 1).value = file
-    balance_ws.cell(row = b_COUNT, column = 2).value = balance
-    balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
-    b_increment()
-    balance_wb.save(dir_balance)
-    print("Written Balance:", written_balance)
-    print("Total Balance:", balance)
+    try:
+        written_balance = ws.cell(row = r-1, column = 7).value
+        written_balance = round(written_balance,2)
+        balance = round(balance, 2)
+        #     written_balance = ws.cell(row = 9, column = 7).value
+        balance_ws.cell(row = b_COUNT, column = 1).value = file
+        balance_ws.cell(row = b_COUNT, column = 2).value = balance
+        balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+        b_increment()
+        balance_wb.save(dir_balance)
+        print("Written Balance:", written_balance)
+        print("Total Balance:", balance)
+    except TypeError:
+        print("Possible string value")
+        error_ws.cell(row = COUNT, column = 1).value = file 
+        error_ws.cell(row = COUNT, column = 2).value = "String value"
+        increment()
+        error_wb.save(dir_error)
+        book.close()
+        return
     # print("Written Balance:", written_balance)
     return 
 
@@ -723,7 +731,7 @@ def process_file(file_in, file_out, file):
     z = ws.max_row
     while(ws.cell(row = z, column = 1).value == None):
         z-=1
-    print(z)
+    # print("Max row:", z)
     cell = ws.cell(row = r, column = 1).value
     try:
         current_date = date(year = cell.year, month = cell.month, day = cell.day)
