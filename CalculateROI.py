@@ -28,7 +28,7 @@ dir = os.getcwd()
 dir_pre = os.path.join(dir, "Before")
 dir_post = os.path.join(dir, "After")
 dir_error = os.path.join(dir, "error_log.xlsx")
-dir_balance = os.path.join(dir, "StatementsBalance_Verification.xlsx")
+dir_balance = os.path.join(dir, "Statement_Balances.xlsx")
 dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
@@ -371,13 +371,21 @@ def verify_balance(d, file):
         r+=1
     # if(r > 10):
     try:
+        name = ws.cell(row = 1, column = 2).value
+        written_date = ws.cell(row = r-1, column = 1).value
+        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
         written_balance = ws.cell(row = r-1, column = 7).value
         written_balance = round(written_balance,2)
         balance = round(balance, 2)
         #     written_balance = ws.cell(row = 9, column = 7).value
         balance_ws.cell(row = b_COUNT, column = 1).value = file
-        balance_ws.cell(row = b_COUNT, column = 2).value = balance
+        balance_ws.cell(row = b_COUNT, column = 2).value = name
         balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+        balance_ws.cell(row = b_COUNT, column = 3).number_format = '"$"#,##0.00_-'
+        balance_ws.cell(row = b_COUNT, column = 4).value = balance
+        balance_ws.cell(row = b_COUNT, column = 4).number_format = '"$"#,##0.00_-'
+        balance_ws.cell(row = b_COUNT, column = 5).value = written_date
+        balance_ws.cell(row = b_COUNT, column = 5).number_format = 'M/D/YYYY'
         b_increment()
         balance_wb.save(dir_balance)
         print("Written Balance:", written_balance)
@@ -830,8 +838,10 @@ if(write_principal == True):
     
 if(verify_statements == True):
     balance_ws.cell(row = 1, column = 1).value = "File"
-    balance_ws.cell(row = 1, column = 2).value = "Calculated Balance"
-    balance_ws.cell(row = 1, column = 3).value = "Written Balance"
+    balance_ws.cell(row = 1, column = 2).value = "Member Name"
+    balance_ws.cell(row = 1, column = 3).value = "Statement Balance"
+    balance_ws.cell(row = 1, column = 4).value = "Calculated Balance"
+    balance_ws.cell(row = 1, column = 5).value = "Date"
     b_increment()
 
 if(transactions_option == True):
