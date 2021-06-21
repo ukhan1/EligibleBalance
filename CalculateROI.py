@@ -28,7 +28,7 @@ dir = os.getcwd()
 dir_pre = os.path.join(dir, "Before")
 dir_post = os.path.join(dir, "After")
 dir_error = os.path.join(dir, "error_log.xlsx")
-dir_balance = os.path.join(dir, "verify_statements.xlsx")
+dir_balance = os.path.join(dir, "StatementsBalance_Verification.xlsx")
 dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
@@ -822,8 +822,8 @@ if(write_principal == True):
     
 if(verify_statements == True):
     balance_ws.cell(row = 1, column = 1).value = "File"
-    balance_ws.cell(row = 1, column = 1).value = "Calculated Balance"
-    balance_ws.cell(row = 1, column = 1).value = "Written Balance"
+    balance_ws.cell(row = 1, column = 2).value = "Calculated Balance"
+    balance_ws.cell(row = 1, column = 3).value = "Written Balance"
     b_increment()
 
 if(transactions_option == True):
