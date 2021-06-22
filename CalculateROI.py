@@ -372,32 +372,47 @@ def verify_balance(d, file):
     # if(r > 10):
     try:
         name = ws.cell(row = 1, column = 2).value
-        written_date = ws.cell(row = r-1, column = 1).value
-        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
         written_balance = ws.cell(row = r-1, column = 7).value
         written_balance = round(written_balance,2)
         balance = round(balance, 2)
-        #     written_balance = ws.cell(row = 9, column = 7).value
-        balance_ws.cell(row = b_COUNT, column = 1).value = file
-        balance_ws.cell(row = b_COUNT, column = 2).value = name
-        balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
-        balance_ws.cell(row = b_COUNT, column = 3).number_format = '"$"#,##0.00_-'
-        balance_ws.cell(row = b_COUNT, column = 4).value = balance
-        balance_ws.cell(row = b_COUNT, column = 4).number_format = '"$"#,##0.00_-'
-        balance_ws.cell(row = b_COUNT, column = 5).value = written_date
-        balance_ws.cell(row = b_COUNT, column = 5).number_format = 'M/D/YYYY'
-        b_increment()
-        balance_wb.save(dir_balance)
-        print("Written Balance:", written_balance)
-        print("Total Balance:", balance)
     except TypeError:
         print("Possible string value")
         error_ws.cell(row = COUNT, column = 1).value = file 
         error_ws.cell(row = COUNT, column = 2).value = "String value"
         increment()
         error_wb.save(dir_error)
-        book.close()
-        return
+        
+        name = ws.cell(row = 1, column = 2).value
+        written_balance = ws.cell(row = r-2, column = 7).value
+        written_balance = round(written_balance,2)
+        balance = round(balance, 2)
+        
+    try:
+        written_date = ws.cell(row = r-1, column = 1).value
+        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
+    except AttributeError:
+        print("Possible missing date")
+        error_ws.cell(row = COUNT, column = 1).value = file 
+        error_ws.cell(row = COUNT, column = 2).value = "Missing date"
+        increment()
+        error_wb.save(dir_error)
+        
+        written_date = ws.cell(row = r-2, column = 1).value
+        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
+    #     written_balance = ws.cell(row = 9, column = 7).value
+    balance_ws.cell(row = b_COUNT, column = 1).value = file
+    balance_ws.cell(row = b_COUNT, column = 2).value = name
+    balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+    balance_ws.cell(row = b_COUNT, column = 3).number_format = '"$"#,##0.00_-'
+    balance_ws.cell(row = b_COUNT, column = 4).value = balance
+    balance_ws.cell(row = b_COUNT, column = 4).number_format = '"$"#,##0.00_-'
+    balance_ws.cell(row = b_COUNT, column = 5).value = written_date
+    balance_ws.cell(row = b_COUNT, column = 5).number_format = 'M/D/YYYY'
+    b_increment()
+    balance_wb.save(dir_balance)
+    print("Written Balance:", written_balance)
+    print("Total Balance:", balance)
+
     # print("Written Balance:", written_balance)
     return 
 
