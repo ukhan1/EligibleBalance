@@ -764,6 +764,8 @@ def process_file(file_in, file_out, file):
             error_ws.cell(row = COUNT, column = 2).value = "After quarter"
             increment()
             error_wb.save(dir_error)
+            if(verify_statements == True):
+                verify_balance(dir_pre, file)
             return
         p1, error, r, EoF, ap = partial_roi(ws, file, start_of_m1, end_of_m1, r, 0)
         p1 = round(p1, 2)
