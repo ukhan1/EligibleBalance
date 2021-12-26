@@ -32,6 +32,7 @@ dir_balance = os.path.join(dir, "Statement_Balances.xlsx")
 dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
+dir_eoy = os.path.join(dir, "EndOfYear")
 # dir_transout = os.path.join(dir, "Out")
 if os.path.isfile(dir_error):
     # print ("File exist")
@@ -80,8 +81,9 @@ def startButton():
     global compare_statements
     global verify_statements
     global transactions_option
+    global end_of_year_statement
     global declared_roi
-    write_principal, write_statements, compare_statements, verify_statements, transactions_option = getBool()
+    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement = getBool()
     q,y,r,inp,outp,trns,tinp = getText()
     try:
         quarter = int(q)
@@ -115,7 +117,7 @@ def startButton():
 
 #Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get()
+    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get(), var6.get()
 def getText():
     global e1
     global e2
@@ -154,6 +156,7 @@ var2 = tk.BooleanVar(value=False)
 var3 = tk.BooleanVar(value=False)
 var4 = tk.BooleanVar(value=False)
 var5 = tk.BooleanVar(value=False)
+var6 = tk.BooleanVar(value=False)
 entryr = declared_roi
 if (tempqtr == 1):
     entryq = 4
@@ -247,6 +250,8 @@ c3 = tk.Checkbutton(bottomFrame3, text = "Compare Statements", command = click, 
 c3.pack()
 c4 = tk.Checkbutton(bottomFrame3, text = "Verify Statements", command = click, variable = var4)
 c4.pack()
+c6 = tk.Checkbutton(bottomFrame3, text = "End of Year Statements", command = click, variable = var6)
+c6.pack()
 tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
 tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "left")
 
@@ -416,7 +421,40 @@ def verify_balance(d, file):
     # print("Written Balance:", written_balance)
     return 
 
-
+def create_eoy(file_in):
+    book = load_workbook(file_in, data_only = True)
+    ws = book.active
+    z = ws.max_row
+    file_out = os.path.join(dir_eoy, file)
+    while(ws.cell(row = z, column = 1).value == None):
+        z-=1
+    r = 9
+    while(r<z):
+        try:
+            cell = ws.cell(row = r, column = 1).value
+            print(cell)
+            if(cell == None):
+                z-=1
+                print("Deleting empty row")
+                ws.delete_rows(r)
+                continue
+            current_date = date(year = cell.year, month = cell.month, day = cell.day)
+            if(cell.year != year):
+                z-=1
+                print("Deleting wrong year")
+                ws.delete_rows(r)
+                continue
+            else:
+                print("Continuing")
+                r+=1
+                continue
+        except:
+            print("Unexpected Error")
+            z-=1
+            ws.delete_rows(r)
+            
+    book.save(file_out)
+    book.close()
 ### Analyzing entire Transaction file
 def add_transaction(file_in):
     book = load_workbook(file_in, data_only = True)
@@ -840,6 +878,8 @@ def process_file(file_in, file_out, file):
             verify_balance(dir_post, file)
         else:
             verify_balance(dir_pre, file)
+    if(end_of_year_statement == True):
+        create_eoy(file_in)
     book.close()
     
 if(write_principal == True):
