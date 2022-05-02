@@ -33,6 +33,8 @@ dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
 dir_eoy = os.path.join(dir, "EndOfYear")
+dir_rent = os.path.join(dir, "Rent_Update.xlsx")
+dir_statements = os.path.join(dir, "Statements")
 # dir_transout = os.path.join(dir, "Out")
 if os.path.isfile(dir_error):
     # print ("File exist")
@@ -82,8 +84,9 @@ def startButton():
     global verify_statements
     global transactions_option
     global end_of_year_statement
+    global update_rent
     global declared_roi
-    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement = getBool()
+    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement, update_rent = getBool()
     q,y,r,inp,outp,trns,tinp = getText()
     try:
         quarter = int(q)
@@ -117,7 +120,7 @@ def startButton():
 
 #Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get(), var6.get()
+    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get(), var6.get(), var7.get()
 def getText():
     global e1
     global e2
@@ -157,6 +160,8 @@ var3 = tk.BooleanVar(value=False)
 var4 = tk.BooleanVar(value=False)
 var5 = tk.BooleanVar(value=False)
 var6 = tk.BooleanVar(value=False)
+var7 = tk.BooleanVar(value=False)
+
 entryr = declared_roi
 if (tempqtr == 1):
     entryq = 4
@@ -252,6 +257,8 @@ c4 = tk.Checkbutton(bottomFrame3, text = "Verify Statements", command = click, v
 c4.pack()
 c6 = tk.Checkbutton(bottomFrame3, text = "End of Year Statements", command = click, variable = var6)
 c6.pack()
+c7 = tk.Checkbutton(bottomFrame3, text = "Update Rent", command = click, variable = var7)
+c7.pack()
 tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
 tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "left")
 
@@ -455,6 +462,15 @@ def create_eoy(file_in):
             
     book.save(file_out)
     book.close()
+    
+def update_rent(file_rent, file_homeowner, r):
+    rent_book = load_workbook(file_rent, data_only = True)
+    rent_ws = rent_book.active
+    homeowner_book = load_workbook(file_homeowner, data_only = True)
+    homeowner_ws = homeowner_book.active
+    homeowner_ws.cell(row = r, column = 2).value = rent_ws.cell(row = 7, column = 3).value()
+    rent_ws.cell(row = 7, column = 3).value = homeowner_ws.cell(row = r, column = 2).value()
+
 ### Analyzing entire Transaction file
 def add_transaction(file_in):
     book = load_workbook(file_in, data_only = True)
@@ -914,6 +930,20 @@ if(transactions_option == True):
         print("Transaction file:", file_in)
         add_transaction(file_in)   
     account_book.close()
+
+if(update_rent == True):
+    rent_wb = load_workbook(dir_rent)
+    rent_ws = rent_wb.active
+    x = rent_ws.max_row
+    while(rent_ws.cell(row=x, column = 1).value == None):
+        x-=1
+    r = 2
+    while(r <= x):
+        file_rent = rent_ws.cell(row = r, column = 1).value
+        file_homeowner = os.path.join(dir_statements, file_rent)
+        update_rent(file_rent, file_homeowner, r)
+        r+=1
+
 if(compare_statements == True):
     principal_wb = load_workbook(dir_principal)
     principal_ws = principal_wb.active
