@@ -464,12 +464,17 @@ def create_eoy(file_in):
     book.close()
     
 def update_rent(file_rent, file_homeowner, r):
-    rent_book = load_workbook(file_rent, data_only = True)
+    print("In update function")
+
+    rent_book = load_workbook(file_rent)
     rent_ws = rent_book.active
-    homeowner_book = load_workbook(file_homeowner, data_only = True)
+
+    homeowner_book = load_workbook(file_homeowner, keep_vba = True)
     homeowner_ws = homeowner_book.active
-    homeowner_ws.cell(row = r, column = 2).value = rent_ws.cell(row = 7, column = 3).value
-    rent_ws.cell(row = 7, column = 3).value = homeowner_ws.cell(row = r, column = 2).value
+
+    rent_ws.cell(row = r, column = 3).value = homeowner_ws.cell(row = 7, column = 3).value
+    homeowner_ws.cell(row = 7, column = 3).value = rent_ws.cell(row = r, column = 2).value
+    
     homeowner_book.save(file_homeowner)
     rent_book.save(file_rent)
     homeowner_book.close()
@@ -946,7 +951,9 @@ if(write_rent == True):
     while(r <= x):
         file_rent = rent_ws.cell(row = r, column = 1).value
         file_homeowner = os.path.join(dir_statements, file_rent)
-        update_rent(file_rent, file_homeowner, r)
+        print("dir rent: " + dir_rent)
+        print("statement path: " + file_homeowner)
+        update_rent(dir_rent, file_homeowner, r)
         r+=1
 
 if(compare_statements == True):
