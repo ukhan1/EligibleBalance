@@ -84,9 +84,9 @@ def startButton():
     global verify_statements
     global transactions_option
     global end_of_year_statement
-    global update_rent
+    global write_rent
     global declared_roi
-    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement, update_rent = getBool()
+    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement, write_rent = getBool()
     q,y,r,inp,outp,trns,tinp = getText()
     try:
         quarter = int(q)
@@ -470,6 +470,10 @@ def update_rent(file_rent, file_homeowner, r):
     homeowner_ws = homeowner_book.active
     homeowner_ws.cell(row = r, column = 2).value = rent_ws.cell(row = 7, column = 3).value()
     rent_ws.cell(row = 7, column = 3).value = homeowner_ws.cell(row = r, column = 2).value()
+    homeowner_book.save(file_homeowner)
+    rent_book.save(file_rent)
+    homeowner_book.close()
+    rent_book.close()
 
 ### Analyzing entire Transaction file
 def add_transaction(file_in):
@@ -931,7 +935,8 @@ if(transactions_option == True):
         add_transaction(file_in)   
     account_book.close()
 
-if(update_rent == True):
+if(write_rent == True):
+    print("updating rent")
     rent_wb = load_workbook(dir_rent)
     rent_ws = rent_wb.active
     x = rent_ws.max_row
