@@ -468,8 +468,8 @@ def update_rent(file_rent, file_homeowner, r):
     rent_ws = rent_book.active
     homeowner_book = load_workbook(file_homeowner, data_only = True)
     homeowner_ws = homeowner_book.active
-    homeowner_ws.cell(row = r, column = 2).value = rent_ws.cell(row = 7, column = 3).value()
-    rent_ws.cell(row = 7, column = 3).value = homeowner_ws.cell(row = r, column = 2).value()
+    homeowner_ws.cell(row = r, column = 2).value = rent_ws.cell(row = 7, column = 3).value
+    rent_ws.cell(row = 7, column = 3).value = homeowner_ws.cell(row = r, column = 2).value
     homeowner_book.save(file_homeowner)
     rent_book.save(file_rent)
     homeowner_book.close()
