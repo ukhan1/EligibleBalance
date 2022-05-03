@@ -464,13 +464,21 @@ def create_eoy(file_in):
     book.close()
     
 def update_rent(file_rent, file_homeowner, r):
-    print("In update function")
-
+    print("Updating: " + file_homeowner)
     rent_book = load_workbook(file_rent)
     rent_ws = rent_book.active
+    
+    try:
+        homeowner_book = load_workbook(file_homeowner, keep_vba = True)
+        homeowner_ws = homeowner_book.active
 
-    homeowner_book = load_workbook(file_homeowner, keep_vba = True)
-    homeowner_ws = homeowner_book.active
+    except:
+        print("Error loading file: " + file_homeowner)
+        error_ws.cell(row = COUNT, column = 1).value = rent_ws.cell(row = r, column = 1).value
+        increment()
+        error_wb.save(dir_error)
+        rent_book.close()
+        return
 
     rent_ws.cell(row = r, column = 3).value = homeowner_ws.cell(row = 7, column = 3).value
     homeowner_ws.cell(row = 7, column = 3).value = rent_ws.cell(row = r, column = 2).value
@@ -942,17 +950,23 @@ if(transactions_option == True):
 
 if(write_rent == True):
     print("updating rent")
+    print("dir rent: " + dir_rent)
     rent_wb = load_workbook(dir_rent)
     rent_ws = rent_wb.active
     x = rent_ws.max_row
+    
+    error_ws.cell(row = 1, column = 1).value = "Expected File"
+    error_wb.save(dir_error)
+    increment()
+    
     while(rent_ws.cell(row=x, column = 1).value == None):
         x-=1
     r = 2
+    
     while(r <= x):
         file_rent = rent_ws.cell(row = r, column = 1).value
         file_homeowner = os.path.join(dir_statements, file_rent)
-        print("dir rent: " + dir_rent)
-        print("statement path: " + file_homeowner)
+
         update_rent(dir_rent, file_homeowner, r)
         r+=1
 
