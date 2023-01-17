@@ -29,6 +29,7 @@ dir_pre = os.path.join(dir, "Before")
 dir_post = os.path.join(dir, "After")
 dir_error = os.path.join(dir, "error_log.xlsx")
 dir_balance = os.path.join(dir, "Statement_Balances.xlsx")
+dir_retrieve = os.path.join
 dir_key = os.path.join(dir,"ACNo_to_File-Mapping.xlsx")
 dir_transactions = os.path.join(dir, "Transactions")
 dir_transin = os.path.join(dir, "In")
@@ -54,6 +55,8 @@ principal_wb = Workbook()
 principal_ws = principal_wb.active
 balance_wb = Workbook()
 balance_ws = balance_wb.active
+retrieve_wb = Workbook()
+retrieve_ws = retrieve_wb.active
 dir_tlist = os.listdir(dir_transactions)
 dir_list = sorted(os.listdir(dir_pre))
 print(dir)
@@ -78,6 +81,7 @@ def startButton():
     global dir_transactions
     global dir_transin
     # global dir_transout
+    global dir_retrieve
     global write_principal
     global write_statements
     global compare_statements
@@ -86,7 +90,8 @@ def startButton():
     global end_of_year_statement
     global write_rent
     global declared_roi
-    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement, write_rent = getBool()
+    global retrieve_balance
+    write_principal, write_statements, compare_statements, verify_statements, transactions_option, end_of_year_statement, write_rent, retrieve_balance = getBool()
     q,y,r,inp,outp,trns,tinp = getText()
     try:
         quarter = int(q)
@@ -120,7 +125,7 @@ def startButton():
 
 #Checkbutton Functions
 def getBool():
-    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get(), var6.get(), var7.get()
+    return var1.get(), var2.get(), var3.get(), var4.get(), var5.get(), var6.get(), var7.get(), var8.get()
 def getText():
     global e1
     global e2
@@ -161,6 +166,7 @@ var4 = tk.BooleanVar(value=False)
 var5 = tk.BooleanVar(value=False)
 var6 = tk.BooleanVar(value=False)
 var7 = tk.BooleanVar(value=False)
+var8 = tk.BooleanVar(value=False)
 
 entryr = declared_roi
 if (tempqtr == 1):
@@ -259,6 +265,9 @@ c6 = tk.Checkbutton(bottomFrame3, text = "End of Year Statements", command = cli
 c6.pack()
 c7 = tk.Checkbutton(bottomFrame3, text = "Update Rent", command = click, variable = var7)
 c7.pack()
+c8 = tk.Checkbutton(bottomFrame3, text = "Retrieve Balances", command = click, variable = var8)
+c8.pack()
+
 tk.Button(bottomFrame4, text = "Exit", padx = 10, command = quitButton).pack(side = "left")
 tk.Button(bottomFrame4, text = "Start", padx = 10, command = startButton).pack(side = "left")
 
@@ -325,6 +334,10 @@ b_COUNT = 1
 def b_increment():
     global b_COUNT
     b_COUNT = b_COUNT+1
+r_COUNT = 1
+def r_increment():
+    global r_COUNT
+    r_COUNT = r_COUNT+1
 
 def compareStatements(file, calculated, r):
     validation = False;
@@ -487,6 +500,56 @@ def update_rent(file_rent, file_homeowner, r):
     rent_book.save(file_rent)
     homeowner_book.close()
     rent_book.close()
+    
+def retrieve_balance(d, file):
+    book = load_workbook(os.path.join(d, file), data_only=True)
+    ws = book.active
+    written_balance = 0
+    r = ws.max_row
+    
+    while((ws.cell(row=r, column = 7).value == None) | (ws.cell(row=r, column = 1).value == None)):
+        r-=1
+
+    try:
+        written_balance = ws.cell(row = r, column = 7).value
+        written_balance = round(written_balance,2)
+
+    except TypeError:
+        print("Possible string value")
+        error_ws.cell(row = COUNT, column = 1).value = file 
+        error_ws.cell(row = COUNT, column = 2).value = "Invalid value"
+        increment()
+        error_wb.save(dir_error)
+        
+        written_balance = ws.cell(row = r-1, column = 7).value
+        written_balance = round(written_balance,2)
+        
+    try:
+        written_date = ws.cell(row = r, column = 1).value
+        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
+    except AttributeError:
+        print("Possible missing date")
+        error_ws.cell(row = COUNT, column = 1).value = file 
+        error_ws.cell(row = COUNT, column = 2).value = "Missing date"
+        increment()
+        error_wb.save(dir_error)
+        
+        written_date = ws.cell(row = r-1, column = 1).value
+        written_date = date(year = written_date.year, month = written_date.month, day = written_date.day)
+    #     written_balance = ws.cell(row = 9, column = 7).value
+    balance_ws.cell(row = b_COUNT, column = 1).value = file
+    balance_ws.cell(row = b_COUNT, column = 2).value = date
+    balance_ws.cell(row = b_COUNT, column = 3).value = written_balance
+    balance_ws.cell(row = b_COUNT, column = 3).number_format = '"$"#,##0.00_-'
+
+    balance_ws.cell(row = b_COUNT, column = 5).value = written_date
+    balance_ws.cell(row = b_COUNT, column = 5).number_format = 'M/D/YYYY'
+    b_increment()
+    balance_wb.save(dir_balance)
+    print("Written Balance:", written_balance)
+
+    # print("Written Balance:", written_balance)
+    return 
 
 ### Analyzing entire Transaction file
 def add_transaction(file_in):
@@ -934,6 +997,12 @@ if(verify_statements == True):
     balance_ws.cell(row = 1, column = 5).value = "Date"
     b_increment()
 
+if(retrieve_balance == True):
+    balance_ws.cell(row = 1, column = 1).value = "Account ID"
+    balance_ws.cell(row = 1, column = 2).value = "Date"
+    balance_ws.cell(row = 1, column = 3).value = "Balance"
+    r_increment()
+
 if(transactions_option == True):
     account_book = load_workbook(dir_key)
     account_ws = account_book.active
@@ -970,6 +1039,13 @@ if(write_rent == True):
         update_rent(dir_rent, file_homeowner, r)
         r+=1
 
+if(retrieve_balance == True):
+    for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
+        file_in = os.path.join(dir_pre, file)
+        #file_in = file_in.replace(os.sep, '/')
+        print(file_in)
+        retrieve_balance(file_in, file)
+
 if(compare_statements == True):
     principal_wb = load_workbook(dir_principal)
     principal_ws = principal_wb.active
@@ -981,14 +1057,15 @@ if(compare_statements == True):
         calculated_roi = principal_ws.cell(row = i, column = 6).value
         compareStatements(fileno, calculated_roi, i)
         i+=1
-else:
-    if(write_principal | write_statements | verify_statements | compare_statements):
-        for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
-            file_in = os.path.join(dir_pre, file)
-            file_out = os.path.join(dir_post, file)
-            #file_in = file_in.replace(os.sep, '/')
-            print(file_in)
-            process_file(file_in, file_out, file)   
+if(write_principal | write_statements | verify_statements):
+    for file in sorted( filter(lambda x: not (x.startswith('~') or x.startswith('.')), dir_list) ):
+        file_in = os.path.join(dir_pre, file)
+        file_out = os.path.join(dir_post, file)
+        #file_in = file_in.replace(os.sep, '/')
+        print(file_in)
+        process_file(file_in, file_out, file)
+
+    
             
     
         
